@@ -151,7 +151,7 @@ void socket_write(char *msg, int len)
 static void *pthread(void *arg)
 {
     int first_contact = 1;
-    std::cout << "接受线程，启动！" << std::endl;
+    std::cout << "接收线程，启动！" << std::endl;
 
     char msg[1024];
 
@@ -216,7 +216,10 @@ static void *pthread(void *arg)
         // 解包，调用回调
         Package *pkg = (Package *)msg;
         if (pkg->payload[0] == '/' && pkg->payload[1] == '0'){// /0 login
-        	cb_req_authentication(pkg->payload[2]);
+        	if(pkg->payload[2]=='1')
+                cb_req_authentication(1);
+            else
+                cb_req_authentication(0);
         }
         else if(pkg->payload[0] == '/' && pkg->payload[1] == '1'){ // /1 register
         	cb_req_register(pkg->payload[2]);

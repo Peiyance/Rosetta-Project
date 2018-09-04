@@ -9,6 +9,7 @@ int count = 0;
 GtkWidget *window;
 
 void cb_req_authentication(int result);
+gboolean on_finish(gpointer data);
 void cb_connection_lost(int error_code);
 
 void on_button_clicked(GtkWidget *button, gpointer userdata)
@@ -19,16 +20,30 @@ void on_button_clicked(GtkWidget *button, gpointer userdata)
     req_authentication(username, password, cb_req_authentication);
 }
 
+gboolean on_finish(gpointer data)
+{
+    // if (result)
+    //     g_print("登陆结果：1\n", result);
+    // else
+    //     g_print("登陆结果：0\n", result);
+
+    char txt[40];
+    static int x = 0;
+    sprintf(txt, "counter：%d", x++);
+
+    // 回调方法1 - 不推荐
+
+    //gdk_threads_enter();
+    gtk_window_set_title(GTK_WINDOW(window), txt); //回调中修改GTK元素 必须要gdk_threads_enter()
+    //gdk_threads_leave();
+    
+    return FALSE;
+}
+
 void cb_req_authentication(int result)
 {
-    g_print("登陆结果：%c\n", result);
-    char txt[40];
-    static int x=0;
-    sprintf(txt,"登陆结果：%d", x++);
-
-    gdk_threads_enter();
-    gtk_window_set_title(GTK_WINDOW(window), txt); //回调中修改GTK元素 必须要gdk_threads_enter()
-    gdk_threads_leave();
+    
+    g_idle_add(on_finish, NULL);
 }
 
 int main(int argc, char *argv[])
@@ -36,9 +51,9 @@ int main(int argc, char *argv[])
     std::cout << "Hello World!" << std::endl;
     init_connector(remoteIP, remotePort);
 
-    if (!g_thread_supported()) //如果gthread沒有被初始化
-        g_thread_init(NULL);   //進行初始化
-    gdk_threads_init();        //初始化GDK多線程
+    //if (!g_thread_supported()) //如果gthread沒有被初始化
+    //   g_thread_init(NULL);   //進行初始化
+    //gdk_threads_init();        //初始化GDK多線程
 
     GtkWidget *button;
     gtk_init(&argc, &argv);
