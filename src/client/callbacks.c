@@ -47,11 +47,11 @@ void on_click_signup(gpointer button, gpointer* entries)
 		return;
 	}
 	gchar* username = gtk_entry_get_text(entries[0]);
-	req_regiester(username, pwd, cb_reg);
+	req_register(username, pwd, cb_reg);
 }
 
 void on_click_login(gpointer button, gpointer* entries)
 {
 	gchar* username = gtk_entry_get_text(entries[0]), *pwd = gtk_entry_get_text(entries[1]);
-	req_authentacation(username, pwd, cb_auth);
+	req_authentication(username, pwd, cb_auth);
 }
