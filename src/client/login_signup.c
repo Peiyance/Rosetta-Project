@@ -105,9 +105,11 @@ void load_login_window()
     //===========================注册button=================================
     login_button_signup = sungtk_button_new_with_image("./imgs/login_signupbutton.png", 0, 0);  
     gtk_table_attach_defaults(GTK_TABLE(main_table),login_button_signup,0,9,5,9);
+    g_signal_connect(G_OBJECT(login_button_signup), "clicked", G_CALLBACK(load_signup_window), NULL);
     //==============================返回button========================================
      login_button_return= sungtk_button_new_with_image("./imgs/returnbutton.png", 0, 0);  
      gtk_table_attach_defaults(GTK_TABLE(main_table),login_button_return,9,18,5,9);  
+     g_signal_connect(G_OBJECT(login_button_return), "clicked", G_CALLBACK(gtk_main_quit), NULL);
     //=========================占位符================================
     
     tmp = gtk_label_new("");
@@ -163,6 +165,7 @@ void load_signup_window()
     //============================输入密码entry===============================
     signup_entry_psw = gtk_entry_new();
     gtk_table_attach_defaults(GTK_TABLE(main_table),signup_entry_psw,5,18,1,2);
+    gtk_entry_set_visibility(GTK_ENTRY(signup_entry_psw), FALSE);
    //============================重复输入密码lable================================
     signup_lable_psw = gtk_label_new("repeat password");
     gtk_table_attach_defaults(GTK_TABLE(main_table),signup_lable_psw,0,5,2,3);
@@ -173,6 +176,9 @@ void load_signup_window()
     //==============================注册button===================================
     signup_button_signup = sungtk_button_new_with_image("./imgs/signupbutton.png", 0, 0);  
     gtk_table_attach_defaults(GTK_TABLE(main_table),signup_button_signup,0,18,8,10);
+    void** entries = (void**)malloc(sizeof(void*)*3); entries[0] = signup_entry_name;
+    entries[1] = signup_entry_psw; entries[2] = signup_entry_repeat_psw;
+    g_signal_connect(G_OBJECT(signup_button_signup), "clicked", G_CALLBACK(on_click_signup), (gpointer*)entries);
     //==============================返回button=================================
     
     signup_button_return = sungtk_button_new_with_image("./imgs/returnbutton.png",0 ,0);
@@ -180,6 +186,7 @@ void load_signup_window()
     //  gtk_misc_set_alignment(GTK_MISC(signup_button_return),0,0);//设定文本在左方
     // gtk_button_set_relief(signup_button_return,GTK_RELIEF_NONE);
     gtk_table_attach_defaults(GTK_TABLE(main_table),signup_button_return,0,9,3,6);
+    g_signal_connect(G_OBJECT(signup_button_return), "clicked", G_CALLBACK(on_click_signup_return), (gpointer)signup_window);
     //=========================占位符================================
     tmp = gtk_label_new("");
     gtk_table_attach_defaults(GTK_TABLE(main_table),tmp,9,18,3,6);
