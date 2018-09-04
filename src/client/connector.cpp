@@ -40,7 +40,7 @@ char *escape_string(char *msg, char *escaped);
 
 // Interfaces
 // returns sockfd. create a thread maintaining the long-term TCP.
-int init_connector(char remoteIP[], short remotePort)
+extern "C" int init_connector(char remoteIP[], short remotePort)
 {
     sockfd = socket(AF_INET, SOCK_STREAM, 0); //tcp
     if (sockfd <= 0)
@@ -64,7 +64,7 @@ Side effect :
 Author      : zyc
 Date        : 2018.9.3
 ********************************************************************************/
-int req_authentication(char *str_username, char *str_password, gboolean (*callback)(gpointer))
+extern "C" int req_authentication(char *str_username, char *str_password, gboolean (*callback)(gpointer))
 {
     cb_req_authentication = callback; // reg callback
     // 转义
@@ -87,7 +87,7 @@ int req_authentication(char *str_username, char *str_password, gboolean (*callba
     return 0;
 }
 
-int req_register(char *str_username, char *str_password, gboolean (*callback)(gpointer))
+extern "C" int req_register(char *str_username, char *str_password, gboolean (*callback)(gpointer))
 {
     cb_req_register = callback; // reg callback
     // 转义

@@ -1,2 +1,2 @@
-main: GUI.h sungtk_interface.c sungtk_interface.h login_signup.c main.c callbacks.c
-	gcc $^ -o main `pkg-config --cflags --libs gtk+-2.0`
+main: sungtk_interface.c  login_signup.c main.c callbacks.c connector.cpp
+	gcc $^ `pkg-config --cflags --libs gtk+-2.0`

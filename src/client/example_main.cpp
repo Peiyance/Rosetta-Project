@@ -3,6 +3,7 @@
 #include <gtk/gtk.h>
 #include "connector.h"
 
+
 char remoteIP[] = "10.211.55.2";
 short remotePort = 8888;
 int count = 0;
