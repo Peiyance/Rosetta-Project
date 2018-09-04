@@ -102,6 +102,9 @@ void load_login_window()
     //
     login_button_login = sungtk_button_new_with_image("./imgs/loginbutton.png", 0, 0);  
     gtk_table_attach_defaults(GTK_TABLE(main_table),login_button_login,0,18,9,10);
+    void** entries = (void**)malloc(sizeof(void*)*2);
+    entries[0] = login_entry_name; entries[1] = login_entry_psw;
+    g_signal_connect(G_OBJECT(login_button_login), "clicked", G_CALLBACK(on_click_login), (gpointer)entries);
     //===========================注册button=================================
     login_button_signup = sungtk_button_new_with_image("./imgs/login_signupbutton.png", 0, 0);  
     gtk_table_attach_defaults(GTK_TABLE(main_table),login_button_signup,0,9,5,9);
