@@ -4,9 +4,8 @@
 	> Mail: 
 	> Created Time: Mon 03 Sep 2018 12:39:14 PM CST
  ************************************************************************/
+#include "GUI.h"
 
-#include <gtk/gtk.h>
-#include "sungtk_interface.h" 
 void change_background(GtkWidget *widget, int w, int h, const gchar *path)
 {
         //1.允许窗口可以绘图
@@ -189,12 +188,5 @@ void load_signup_window()
 
 
     gtk_widget_show_all(signup_window);
-}
-int main(int argv,char *argc[])
-{
-    gtk_init(&argv,&argc);
-    load_login_window();
-    load_signup_window();
-    gtk_main();
 }
 
