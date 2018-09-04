@@ -210,14 +210,17 @@ static void *pthread(void *arg)
         Package *pkg = (Package *)msg;
         if (pkg->payload[0] == '/' && pkg->payload[1] == '0')
         { // /0 login
-            if (pkg->payload[2] == '1')
+            if (pkg->payload[2] == '1') //success
                 g_idle_add(cb_req_authentication, (void*)1);
             else
                 g_idle_add(cb_req_authentication, (void*)0);
         }
         else if (pkg->payload[0] == '/' && pkg->payload[1] == '1')
         { // /1 register
-            g_idle_add(cb_req_register, &pkg->payload[2]);
+            if (pkg->payload[2] == '1')  //success
+                g_idle_add(cb_req_register, (void*)1);
+            else
+                g_idle_add(cb_req_register, (void*)0);
         }
         else if (pkg->payload[0] == '/' && pkg->payload[1] == '2')
         { // /2 contacts
