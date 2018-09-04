@@ -17,25 +17,21 @@ void on_button_clicked(GtkWidget *button, gpointer userdata)
     char username[] = "username,x\\xx\\,\\";
     char password[] = "pswwwwwfse";
 
-    req_authentication(username, password, cb_req_authentication);
+    req_authentication(username, password, on_finish);
 }
 
 gboolean on_finish(gpointer data)
 {
-    // if (result)
-    //     g_print("登陆结果：1\n", result);
-    // else
-    //     g_print("登陆结果：0\n", result);
+    if (data)
+         g_print("登陆结果：1\n", data);
+     else
+         g_print("登陆结果：0\n", data);
 
     char txt[40];
     static int x = 0;
     sprintf(txt, "counter：%d", x++);
 
-    // 回调方法1 - 不推荐
-
-    //gdk_threads_enter();
-    gtk_window_set_title(GTK_WINDOW(window), txt); //回调中修改GTK元素 必须要gdk_threads_enter()
-    //gdk_threads_leave();
+    gtk_window_set_title(GTK_WINDOW(window), txt);
     
     return FALSE;
 }
