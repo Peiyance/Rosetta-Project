@@ -48,6 +48,8 @@ void load_login_window()
     GtkWidget *login_entry_psw;
     GtkWidget *login_lable_name;
     GtkWidget *login_lable_psw;
+    GtkWidget *login_button_signup;
+    GtkWidget *login_button_return;
     GtkWidget *tmp;
     GtkWidget *login_button_login;
     GtkWidget *login_button_modify_to_signup;
@@ -70,7 +72,7 @@ void load_login_window()
     input_box = gtk_table_new(4,1,FALSE);
     gtk_container_set_border_width(GTK_CONTAINER(input_box),20);
      gtk_table_set_row_spacings(GTK_TABLE(input_box),8); 
-    gtk_table_attach_defaults(GTK_TABLE(main_table),input_box,0,18,0,8);
+    gtk_table_attach_defaults(GTK_TABLE(main_table),input_box,0,18,0,4);
     //=========================图片=================================
    // login_img_logo = gtk_image_new_from_file("./imgs/logo.png");
    // if(login_img_logo == NULL)g_print("logo image load failed!\n");
@@ -102,13 +104,18 @@ void load_login_window()
     login_button_login = sungtk_button_new_with_image("./imgs/loginbutton.png", 0, 0);  
     gtk_table_attach_defaults(GTK_TABLE(main_table),login_button_login,0,18,9,10);
     //===========================注册button=================================
-    // login_button_modify_to_signup = gtk_button_new_with_label("注册");
-   // gtk_table_attach_defaults(GTK_TABLE(main_table),login_button_modify_to_signup,10,18,8,10);
+    login_button_signup = sungtk_button_new_with_image("./imgs/login_signupbutton.png", 0, 0);  
+    gtk_table_attach_defaults(GTK_TABLE(main_table),login_button_signup,0,9,5,9);
+    //==============================返回button========================================
+     login_button_return= sungtk_button_new_with_image("./imgs/returnbutton.png", 0, 0);  
+     gtk_table_attach_defaults(GTK_TABLE(main_table),login_button_return,9,18,5,9);  
     //=========================占位符================================
-    tmp = gtk_label_new("");
-    gtk_widget_set_size_request (tmp,65,65);
-    gtk_table_attach_defaults(GTK_TABLE(main_table),tmp,0,18,8,9);
     
+    tmp = gtk_label_new("");
+    gtk_widget_set_size_request (tmp,30,30);
+    gtk_table_attach_defaults(GTK_TABLE(main_table),tmp,0,18,4,5);
+
+
     gtk_widget_show_all(login_window);
 }
 //=============================加载注册页面==========================
@@ -133,6 +140,8 @@ void load_signup_window()
     gtk_window_set_title(GTK_WINDOW(signup_window),"Rosetta"); 
      gtk_window_set_opacity(GTK_WINDOW(signup_window), 0.83);       // 设置透明度函数
     gtk_window_set_position(GTK_WINDOW(signup_window), GTK_WIN_POS_CENTER);
+    
+     gtk_window_set_decorated(signup_window,NULL);
     //==========================分割界面==============================
     main_table = gtk_table_new(10,18,FALSE);
     gtk_container_add(GTK_CONTAINER(signup_window),main_table);
@@ -166,25 +175,26 @@ void load_signup_window()
     signup_button_signup = sungtk_button_new_with_image("./imgs/signupbutton.png", 0, 0);  
     gtk_table_attach_defaults(GTK_TABLE(main_table),signup_button_signup,0,18,8,10);
     //==============================返回button=================================
-         signup_button_return = sungtk_button_new_with_image("./imgs/returnbutton.png",0 ,0);
-   // signup_button_return = gtk_button_new_with_label("return");
-  //  gtk_misc_set_alignment(GTK_MISC(signup_button_return),0,0);//设定文本在左方
-   // gtk_button_set_relief(signup_button_return,GTK_RELIEF_NONE);
+    
+    signup_button_return = sungtk_button_new_with_image("./imgs/returnbutton.png",0 ,0);
+    // signup_button_return = gtk_button_new_with_label("return");
+    //  gtk_misc_set_alignment(GTK_MISC(signup_button_return),0,0);//设定文本在左方
+    // gtk_button_set_relief(signup_button_return,GTK_RELIEF_NONE);
     gtk_table_attach_defaults(GTK_TABLE(main_table),signup_button_return,0,9,3,6);
- //=========================占位符================================
+    //=========================占位符================================
     tmp = gtk_label_new("");
     gtk_table_attach_defaults(GTK_TABLE(main_table),tmp,9,18,3,6);
     tmp = gtk_label_new("");
     gtk_table_attach_defaults(GTK_TABLE(main_table),tmp,0,18,6,8);
-    
+
+
     gtk_widget_show_all(signup_window);
 }
-
-//int main(int argv,char *argc[])
-//{
-//    gtk_init(&argv,&argc);
-//    load_login_window();
-///    load_signup_window();
- //   gtk_main();
-//}
+int main(int argv,char *argc[])
+{
+    gtk_init(&argv,&argc);
+    load_login_window();
+    load_signup_window();
+    gtk_main();
+}
 
