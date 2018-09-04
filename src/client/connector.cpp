@@ -28,7 +28,7 @@ struct Package
     char payload[0];
 };
 
-void (*cb_pull_contacts)(int) = NULL;
+void (*cb_req_contacts)(char*) = NULL;
 void (*cb_req_authentication)(int) = NULL;
 void (*cb_req_register)(int) = NULL;
 void (*cb_connection_lost)(int) = NULL;
@@ -79,7 +79,7 @@ int req_authentication(char *str_username, char *str_password, void (*callback)(
     strcat(escaped_username, ",");
     memcpy(pkg->payload, "/0", strlen("/0"));
     memcpy(pkg->payload + 2, escaped_username, strlen(escaped_username));
-    memcpy(pkg->payload + 2 + strlen(escaped_username), str_password, strlen(escaped_password));
+    memcpy(pkg->payload + 2 + strlen(escaped_username), escaped_password, strlen(escaped_password));
     pkg->len = 2 + strlen(escaped_username) + strlen(escaped_password);
 
     write(sockfd, pkg, sizeof(Package) + pkg->len);
@@ -87,6 +87,45 @@ int req_authentication(char *str_username, char *str_password, void (*callback)(
 }
 
 int req_register(char *str_username, char *str_password, void (*callback)(int))
+{
+    cb_req_register = callback; // reg callback
+    // 转义
+    char escaped_username[1024], escaped_password[1024];
+    escape_string(str_username, escaped_username);
+    escape_string(str_password, escaped_password);
+
+    // 构造数据包
+    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
+    pkg->package_sequence = send_package_sequence++;
+    pkg->ver = 0x1;
+
+    strcat(escaped_username, ",");
+    memcpy(pkg->payload, "/1", strlen("/1"));
+    memcpy(pkg->payload + 2, escaped_username, strlen(escaped_username));
+    memcpy(pkg->payload + 2 + strlen(escaped_username), escaped_password, strlen(escaped_password));
+    pkg->len = 2 + strlen(escaped_username) + strlen(escaped_password);
+
+    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    return 0;
+}
+
+int req_contacts(void (*callback)(char *contacts_raw))
+{
+	cb_req_contacts = callback; // reg callback
+    
+    // 构造数据包
+    Package *pkg = (Package *)new char[sizeof(Package) + 4];
+    pkg->package_sequence = send_package_sequence++;
+    pkg->ver = 0x1;
+
+    memcpy(pkg->payload, "/2", strlen("/2"));
+    pkg->len = 2 ;
+
+    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    return 0;
+}
+
+int req_edit_contacts(char *username, int opt, void (*callback)(char *contacts_raw))
 {
     return 0;
 }
@@ -112,7 +151,7 @@ void socket_write(char *msg, int len)
 static void *pthread(void *arg)
 {
     int first_contact = 1;
-    std::cout << "thrad0000" << std::endl;
+    std::cout << "接受线程，启动！" << std::endl;
 
     char msg[1024];
 
@@ -172,15 +211,21 @@ static void *pthread(void *arg)
 
             continue;
         }
-
         msg[len] = '\0';
-        printf("recv %s from server\n", msg);
 
-        // call callbacks.
-        if (strcmp(msg, "auth0010") == 0)
-        {
-            cb_req_authentication(1);
+        // 解包，调用回调
+        Package *pkg = (Package *)msg;
+        if (pkg->payload[0] == '/' && pkg->payload[1] == '0'){// /0 login
+        	cb_req_authentication(pkg->payload[2]);
         }
+        else if(pkg->payload[0] == '/' && pkg->payload[1] == '1'){ // /1 register
+        	cb_req_register(pkg->payload[2]);
+        }
+        else if(pkg->payload[0] == '/' && pkg->payload[1] == '2'){ // /2 contacts
+        	cb_req_contacts(&pkg->payload[2]);
+        }
+
+        printf("recv %s from server\n", pkg->payload);
     }
 }
 

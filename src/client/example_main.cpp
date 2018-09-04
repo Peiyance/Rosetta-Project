@@ -13,39 +13,32 @@ void cb_connection_lost(int error_code);
 
 void on_button_clicked(GtkWidget *button, gpointer userdata)
 {
-    // //g_print("你好，这是测试程序。");
-    // g_print("Hello, this is a test!");
-    // //g_print("%d\n",(gint)userdata);
-    // g_print("%d\n", count);
-    // count = count + 1;
-    char username[] = "username,x\\xx\\,\\" ;
+    char username[] = "username,x\\xx\\,\\";
     char password[] = "pswwwwwfse";
 
-    req_authentication(username,password, cb_req_authentication);
+    req_authentication(username, password, cb_req_authentication);
 }
 
 void cb_req_authentication(int result)
 {
-    g_print("登陆结果：%d\n", result);
-    // gtk_window_set_title(GTK_WINDOW(window), "ffss"); //回调中修改GTK元素会产生错误?
+    g_print("登陆结果：%c\n", result);
+    char txt[40];
+    static int x=0;
+    sprintf(txt,"登陆结果：%d", x++);
 
-    /*
-    The program 'main' received an X Window System error.
-    This probably reflects a bug in the program.
-    The error was 'BadDrawable (invalid Pixmap or Window parameter)'.
-  (Details: serial 3540 error_code 9 request_code 141 minor_code 4)
-  (Note to programmers: normally, X errors are reported asynchronously;
-   that is, you will receive the error a while after causing it.
-   To debug your program, run it with the --sync command line
-   option to change this behavior. You can then get a meaningful
-   backtrace from your debugger if you break on the gdk_x_error() function.)
-   */
+    gdk_threads_enter();
+    gtk_window_set_title(GTK_WINDOW(window), txt); //回调中修改GTK元素 必须要gdk_threads_enter()
+    gdk_threads_leave();
 }
 
 int main(int argc, char *argv[])
 {
     std::cout << "Hello World!" << std::endl;
     init_connector(remoteIP, remotePort);
+
+    if (!g_thread_supported()) //如果gthread沒有被初始化
+        g_thread_init(NULL);   //進行初始化
+    gdk_threads_init();        //初始化GDK多線程
 
     GtkWidget *button;
     gtk_init(&argc, &argv);
