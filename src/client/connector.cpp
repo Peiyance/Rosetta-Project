@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <gtk/gtk.h>
 // #include <event2/event.h>
 // #include <event2/event_struct.h>
 // #include <event2/buffer.h>
@@ -28,10 +29,10 @@ struct Package
     char payload[0];
 };
 
-void (*cb_req_contacts)(char*) = NULL;
-void (*cb_req_authentication)(int) = NULL;
-void (*cb_req_register)(int) = NULL;
-void (*cb_connection_lost)(int) = NULL;
+gboolean (*cb_req_contacts)(gpointer) = NULL;
+gboolean (*cb_req_authentication)(gpointer) = NULL;
+gboolean (*cb_req_register)(gpointer) = NULL;
+gboolean (*cb_connection_lost)(gpointer) = NULL;
 } // namespace connector
 using namespace connector;
 
@@ -63,7 +64,7 @@ Side effect :
 Author      : zyc
 Date        : 2018.9.3
 ********************************************************************************/
-int req_authentication(char *str_username, char *str_password, void (*callback)(int))
+int req_authentication(char *str_username, char *str_password, gboolean (*callback)(gpointer))
 {
     cb_req_authentication = callback; // reg callback
     // 转义
@@ -86,7 +87,7 @@ int req_authentication(char *str_username, char *str_password, void (*callback)(
     return 0;
 }
 
-int req_register(char *str_username, char *str_password, void (*callback)(int))
+int req_register(char *str_username, char *str_password, gboolean (*callback)(gpointer))
 {
     cb_req_register = callback; // reg callback
     // 转义
@@ -109,23 +110,23 @@ int req_register(char *str_username, char *str_password, void (*callback)(int))
     return 0;
 }
 
-int req_contacts(void (*callback)(char *contacts_raw))
+int req_contacts(gboolean (*callback)(gpointer))
 {
-	cb_req_contacts = callback; // reg callback
-    
+    cb_req_contacts = callback; // reg callback
+
     // 构造数据包
     Package *pkg = (Package *)new char[sizeof(Package) + 4];
     pkg->package_sequence = send_package_sequence++;
     pkg->ver = 0x1;
 
     memcpy(pkg->payload, "/2", strlen("/2"));
-    pkg->len = 2 ;
+    pkg->len = 2;
 
     write(sockfd, pkg, sizeof(Package) + pkg->len);
     return 0;
 }
 
-int req_edit_contacts(char *username, int opt, void (*callback)(char *contacts_raw))
+int req_edit_contacts(char *username, int opt, gboolean (*callback)(gpointer))
 {
     return 0;
 }
@@ -135,23 +136,15 @@ int post_msg_unicast(char *str_peer, char *msg)
     return 0;
 }
 
-void reg_cb_connection_lost(void (*callback)(int))
+void reg_cb_connection_lost(gboolean (*callback)(gpointer))
 {
     cb_connection_lost = callback;
-}
-
-// raw socket write
-void socket_write(char *msg, int len)
-{
-    write(sockfd, msg, len);
-    //sleep(1.5);
-    //write(sockfd, "99899", sizeof("99899"));
 }
 
 static void *pthread(void *arg)
 {
     int first_contact = 1;
-    std::cout << "接受线程，启动！" << std::endl;
+    std::cout << "接收线程，启动！" << std::endl;
 
     char msg[1024];
 
@@ -168,7 +161,7 @@ static void *pthread(void *arg)
                 {
                     printf("[Error] Connection Lost\n");
                     if (cb_connection_lost)
-                        cb_connection_lost(50831);
+                        g_idle_add(cb_connection_lost, (void*)10086);
                 }
                 close(sockfd);
                 sockfd = socket(AF_INET, SOCK_STREAM, 0); //tcp
@@ -215,14 +208,20 @@ static void *pthread(void *arg)
 
         // 解包，调用回调
         Package *pkg = (Package *)msg;
-        if (pkg->payload[0] == '/' && pkg->payload[1] == '0'){// /0 login
-        	cb_req_authentication(pkg->payload[2]);
+        if (pkg->payload[0] == '/' && pkg->payload[1] == '0')
+        { // /0 login
+            if (pkg->payload[2] == '1')
+                g_idle_add(cb_req_authentication, (void*)1);
+            else
+                g_idle_add(cb_req_authentication, (void*)0);
         }
-        else if(pkg->payload[0] == '/' && pkg->payload[1] == '1'){ // /1 register
-        	cb_req_register(pkg->payload[2]);
+        else if (pkg->payload[0] == '/' && pkg->payload[1] == '1')
+        { // /1 register
+            g_idle_add(cb_req_register, &pkg->payload[2]);
         }
-        else if(pkg->payload[0] == '/' && pkg->payload[1] == '2'){ // /2 contacts
-        	cb_req_contacts(&pkg->payload[2]);
+        else if (pkg->payload[0] == '/' && pkg->payload[1] == '2')
+        { // /2 contacts
+            g_idle_add(cb_req_contacts, &pkg->payload[2]);
         }
 
         printf("recv %s from server\n", pkg->payload);
