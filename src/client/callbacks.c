@@ -1,6 +1,30 @@
 #include "GUI.h"
 #include "connector.h"
 
+void load_information(GtkWidget* expander, GtkWidget* listbox, Entity* list, int cnt, void cb(GtkWidget* widget, GdkEvent* event, Entity* who))
+{
+    if(listbox){
+        gtk_widget_destroy(listbox);
+    }
+    listbox = gtk_vbox_new(FALSE,0) ;
+    gtk_container_add(GTK_CONTAINER(expander), listbox);
+    for(int i = 0; i < cnt; i++)
+    {
+        GtkWidget *eventbox = gtk_event_box_new();
+        GtkWidget *boxinfo = gtk_hbox_new(FALSE,0);
+        gtk_container_add(GTK_CONTAINER(eventbox), boxinfo);
+        char avatar_dir_now[40];
+        sprintf(avatar_dir_now, "./imgs/avatars/%02d.png", list[i].avatar_id);
+        GtkWidget *img = gtk_image_new_from_file(avatar_dir_now);
+        gtk_box_pack_start(GTK_BOX(boxinfo),img,FALSE,FALSE,10);
+        GtkWidget *username_lable = gtk_label_new(list[i].nickname);
+        gtk_box_pack_start(GTK_BOX(boxinfo),username_lable,FALSE,FALSE,0);
+        gtk_box_pack_start(GTK_BOX(listbox),eventbox,FALSE,FALSE,3);
+        g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(cb), &list[i]);
+    }
+    gtk_widget_show_all(expander);
+}
+
 void msgbox(const char* msg)
 {
 	GtkWidget* pop = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -15,9 +39,8 @@ void msgbox(const char* msg)
 
 gboolean cb_contacts(gpointer data)
 {
-	int *p = (int*)data;
-	friend_cnt = *p;
-	friendlist = (Entity*)(++p);
+	friend_cnt = *(int*)data;
+	friendlist = (Entity*)(data+4);
 	load_friend_info();
 }
 

@@ -24,7 +24,11 @@ void load_friend_info();
 //settings.c
 void load_setting_windows();
 
+//chat_history_window.c
+void history_message_window();
+
 //callbacks.c
+void load_information(GtkWidget* expander, GtkWidget* listbox, Entity* list, int cnt, void cb(GtkWidget* widget, GdkEvent* event, Entity* who));
 void msgbox(const char* msg);
 void on_click_signup_return(gpointer button, gpointer window);
 void on_click_signup(gpointer button, gpointer* entries);	

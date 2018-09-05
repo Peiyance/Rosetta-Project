@@ -7,40 +7,13 @@
  ************************************************************************/
 GtkWidget *main_window, *friends_expander, *groups_expander, *friends_listbox = NULL, *groups_listbox = NULL;
 
-void load_information(GtkWidget* expander, GtkWidget* listbox, Entity* list, int cnt, int is_friend)
-{
-    if(listbox){
-        gtk_widget_destroy(listbox);
-    }
-    listbox = gtk_vbox_new(FALSE,0) ;
-    gtk_container_add(GTK_CONTAINER(expander), listbox);
-    for(int i = 0; i < cnt; i++)
-    {
-        GtkWidget *eventbox = gtk_event_box_new();
-        GtkWidget *boxinfo = gtk_hbox_new(FALSE,0);
-        gtk_container_add(GTK_CONTAINER(eventbox), boxinfo);
-        char avatar_dir_now[40];
-        sprintf(avatar_dir_now, "./imgs/avatars/%02d.png", list[i].avatar_id);
-        GtkWidget *img = gtk_image_new_from_file(avatar_dir_now);
-        gtk_box_pack_start(GTK_BOX(boxinfo),img,FALSE,FALSE,10);
-        GtkWidget *username_lable = gtk_label_new(list[i].nickname);
-        gtk_box_pack_start(GTK_BOX(boxinfo),username_lable,FALSE,FALSE,0);
-        gtk_box_pack_start(GTK_BOX(listbox),eventbox,FALSE,FALSE,3);
-        if(is_friend){
-            g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(on_click_friend), &list[i]);
-        }else{
-            g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(on_click_group), &list[i]);
-        }
-     }
-     gtk_widget_show_all(expander);
-}
-
 void load_friend_info(){
-    load_information(friends_expander, friends_listbox, friendlist, friend_cnt, 1);
+    printf("friend_cnt %d\n", friend_cnt);
+    load_information(friends_expander, friends_listbox, friendlist, friend_cnt, on_click_friend);
 }
 
 void load_group_info(){
-    load_information(groups_expander, groups_listbox, grouplist, group_cnt, 0);
+    load_information(groups_expander, groups_listbox, grouplist, group_cnt, on_click_group);
 }
 
 void load_main_window()
