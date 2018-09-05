@@ -8,7 +8,7 @@ int main(int argv, char *argc[])
     init_connector(remoteIP, remotePort);
 
     gtk_init(&argv, &argc);
-    history_message_window();
+    // history_message_window();
     load_login_window();
 		// Entity *e = (Entity*) malloc(sizeof(Entity));
 		// memcpy(e->nickname, "heiheihei\0", sizeof(e->nickname));

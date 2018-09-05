@@ -28,7 +28,7 @@ void load_setting_windows();
 void history_message_window();
 
 //callbacks.c
-void load_information(GtkWidget* expander, GtkWidget* listbox, Entity* list, int cnt, void cb(GtkWidget* widget, GdkEvent* event, Entity* who));
+void load_information(GtkWidget* expander, GtkWidget** listbox, Entity* list, int cnt, void cb(GtkWidget* widget, GdkEvent* event, Entity* who));
 void msgbox(const char* msg);
 void on_click_signup_return(gpointer button, gpointer window);
 void on_click_signup(gpointer button, gpointer* entries);	
@@ -36,8 +36,12 @@ void on_click_login(gpointer button, gpointer* entries);
 void on_click_friend(GtkWidget* widget, GdkEvent* event, Entity* who);
 void on_click_group(GtkWidget* widget, GdkEvent* event, Entity* who);
 void test_cb(gpointer x, GtkTextView* test);
+void search_user(GtkWidget* entry);
+void search_friends(GtkWidget* entry);
 
 //friends_groups_settings.cpp
+GtkWidget* result_main_viewport, *result_show_box;
 void load_add_new_friend_window();
+
 
 #endif

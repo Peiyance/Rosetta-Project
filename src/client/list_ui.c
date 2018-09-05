@@ -6,14 +6,35 @@
 	> Created Time: Mon 03 Sep 2018 07:29:03 PM CST
  ************************************************************************/
 GtkWidget *main_window, *friends_expander, *groups_expander, *friends_listbox = NULL, *groups_listbox = NULL;
+GtkWidget *results_expander = NULL, *results_listbox = NULL;
+
+void search_friends(GtkWidget* entry)
+{
+    char* pattern = gtk_entry_get_text(entry);
+    Entity* list = (Entity*)malloc(sizeof(Entity)*(friend_cnt+group_cnt));
+    int cnt = 0;
+    for(int i = 0; i < friend_cnt; i++){
+        if(strstr(friendlist[i].nickname, pattern)){
+            list[cnt++] = friendlist[i];
+            sprintf(list[cnt-1].nickname, "%s(Friend)", friendlist[i].nickname);
+        }
+    }
+    for(int i = 0; i < group_cnt; i++){
+        if(strstr(grouplist[i].nickname, pattern)){
+            list[cnt++] = grouplist[i];
+            sprintf(list[cnt-1].nickname, "%s(Group)", grouplist[i].nickname);
+        }
+    }
+    load_information(results_expander, &results_listbox, list, cnt, on_click_friend);
+}
 
 void load_friend_info(){
-    printf("friend_cnt %d\n", friend_cnt);
-    load_information(friends_expander, friends_listbox, friendlist, friend_cnt, on_click_friend);
+    printf("addr: %d\n", friends_listbox);
+    load_information(friends_expander, &friends_listbox, friendlist, friend_cnt, on_click_friend);
 }
 
 void load_group_info(){
-    load_information(groups_expander, groups_listbox, grouplist, group_cnt, on_click_group);
+    load_information(groups_expander, &groups_listbox, grouplist, group_cnt, on_click_group);
 }
 
 void load_main_window()
@@ -48,16 +69,20 @@ void load_main_window()
          //====================搜索好友
             GtkWidget *main_search_entry = gtk_entry_new();
             gtk_box_pack_start(GTK_BOX(main_box),main_search_entry,FALSE,FALSE,10);
+            g_signal_connect(GTK_OBJECT(main_search_entry), "activate", G_CALLBACK(search_friends), NULL);
         //=========================好友们
         GtkWidget *main_scrolledwindow = gtk_scrolled_window_new(NULL,NULL);
         gtk_scrolled_window_set_policy(main_scrolledwindow,GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC); 
             GtkWidget *main_viewport = gtk_viewport_new(NULL,NULL);/*创建文本视图构件*/
                     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(main_scrolledwindow),main_viewport);
                 GtkWidget *box_div = gtk_vbox_new(FALSE,0);
-                    friends_expander = gtk_expander_new("my friends");
+                    results_expander = gtk_expander_new("Search Results");
+                        gtk_box_pack_start(GTK_BOX(box_div),results_expander,FALSE,FALSE,0);
+                    gtk_expander_set_expanded(results_expander, TRUE);
+                    friends_expander = gtk_expander_new("My Friends");
                         gtk_box_pack_start(GTK_BOX(box_div),friends_expander,FALSE,FALSE,0);
                     gtk_expander_set_expanded(friends_expander, TRUE);
-                    groups_expander = gtk_expander_new("my groups");
+                    groups_expander = gtk_expander_new("My Groups");
                         gtk_box_pack_start(GTK_BOX(box_div),groups_expander,FALSE,FALSE,0);
                     gtk_expander_set_expanded(groups_expander, TRUE);
                     gtk_container_add(GTK_CONTAINER(main_viewport),box_div);

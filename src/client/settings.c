@@ -28,16 +28,16 @@ void  load_setting_windows()
     
     GtkWidget *add_new_friend = gtk_menu_item_new_with_label("添加好友");
          gtk_menu_shell_append(GTK_MENU_SHELL(menu_friend_groups_settings),add_new_friend);
-         g_signal_connect(G_OBJECT(add_new_friend),"activate",G_CALLBACK(load_add_new_friend_window),0);
+         g_signal_connect(G_OBJECT(add_new_friend),"activate",G_CALLBACK(load_add_new_friend_window), search_user);
     GtkWidget *delete_friend = gtk_menu_item_new_with_label("删除好友");
         gtk_menu_shell_append(GTK_MENU_SHELL(menu_friend_groups_settings),delete_friend);
-         // g_signal_connect(G_OBJECT(delete_friend),"activate",G_CALLBACK(load_delete_friend_window),0);
+         // g_signal_connect(G_OBJECT(delete_friend),"activate",G_CALLBACK(load_add_new_friend_window), search_friend);
     GtkWidget *add_new_group = gtk_menu_item_new_with_label("添加群");
         gtk_menu_shell_append(GTK_MENU_SHELL(menu_friend_groups_settings),add_new_group);
-    //g_signal_connect(G_OBJECT(add_new_group),"activate",G_CALLBACK(load_add_new_group),0);
+    //g_signal_connect(G_OBJECT(add_new_group),"activate",G_CALLBACK(load_add_new_friend_window), 2);
     GtkWidget *delete_group = gtk_menu_item_new_with_label("删除群");
         gtk_menu_shell_append(GTK_MENU_SHELL(menu_friend_groups_settings),delete_group);
-      // g_signal_connect(G_OBJECT(delete_group),"activate",G_CALLBACK(load_delete_group),0); 
+      // g_signal_connect(G_OBJECT(delete_group),"activate",G_CALLBACK(load_add_new_friend_window), 3);
     gtk_menu_shell_append(GTK_MENU_SHELL(menubar),friends_groups_settings);
 
     GtkWidget *menu_change_interface = gtk_menu_new();
