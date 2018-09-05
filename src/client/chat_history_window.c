@@ -47,6 +47,7 @@ void history_message_window()
     gtk_container_add(GTK_CONTAINER(history_box),history_scrolled);/*将滚动窗口构件加入窗体*/
     gtk_widget_show(history_scrolled);/*显示滚动窗口构件*/
     history_text = gtk_text_view_new();/*创建文本视图构件*/
+    g_signal_connect(GTK_OBJECT(history_window), "activate_default", G_CALLBACK(test_cb), history_text);
     gtk_text_view_set_editable(history_text, FALSE);
     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(history_scrolled),history_text);/*将文本视图构件加入滚动窗口*/
     gtk_widget_set_size_request(history_scrolled, 300, 372);

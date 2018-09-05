@@ -35,6 +35,7 @@ void on_click_signup(gpointer button, gpointer* entries);
 void on_click_login(gpointer button, gpointer* entries);
 void on_click_friend(GtkWidget* widget, GdkEvent* event, Entity* who);
 void on_click_group(GtkWidget* widget, GdkEvent* event, Entity* who);
+void test_cb(gpointer x, GtkTextView* test);
 
 
 #endif

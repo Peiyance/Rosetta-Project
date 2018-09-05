@@ -46,8 +46,8 @@ gboolean cb_contacts(gpointer data)
 
 gboolean cb_groups(gpointer data)
 {
-	int *p = (int*)data, cnt = *p;
-	grouplist = (Entity*)(++p);
+	group_cnt = *(int*)data;
+	grouplist = (Entity*)(data+4);
 	load_group_info();
 }
 
@@ -114,4 +114,12 @@ void on_click_friend(GtkWidget* widget, GdkEvent* event, Entity* who)
 void on_click_group(GtkWidget* widget, GdkEvent* event, Entity* who)
 {
 	msgbox(who->nickname);
+}
+
+void test_cb(gpointer x, GtkTextView* test)
+{
+	printf("triggered\n");
+	GtkTextBuffer *buf = gtk_text_view_get_buffer(test);
+	gtk_text_buffer_insert_at_cursor(buf, "23333\n", -1);
+	gtk_widget_show(test);
 }
