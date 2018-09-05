@@ -15,7 +15,7 @@ void msgbox(const char* msg)
 
 gboolean cb_contacts(gpointer data)
 {
-	int *p = (int*)data, group_cnt = *p;
+	int *p = (int*)data, friend_cnt = *p;
 	friendlist = (Entity*)(++p);
 	load_friend_info();
 }
