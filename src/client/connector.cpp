@@ -13,6 +13,7 @@
 // #include <event2/bufferevent.h>
 // #include <event2/util.h>
 #include "connector.h"
+#include "common.h"
 
 namespace connector
 {
@@ -24,7 +25,7 @@ int recv_package_sequence = 0; //接收封包编号计数器
 struct Package
 {
     int package_sequence;
-    short ver;
+    int ver;
     int len;
     char payload[0];
 };
@@ -33,6 +34,12 @@ gboolean (*cb_req_contacts)(gpointer) = NULL;
 gboolean (*cb_req_authentication)(gpointer) = NULL;
 gboolean (*cb_req_register)(gpointer) = NULL;
 gboolean (*cb_connection_lost)(gpointer) = NULL;
+gboolean (*cb_recv_unicast)(gpointer) = NULL;
+gboolean (*cb_recv_multicast)(gpointer) = NULL;
+gboolean (*cb_delete_contacts)(gpointer) = NULL;
+gboolean (*cb_req_search_contacts)(gpointer) = NULL;
+gboolean (*cb_req_add_contacts)(gpointer) = NULL;
+
 } // namespace connector
 using namespace connector;
 
@@ -131,8 +138,111 @@ int req_edit_contacts(char *username, int opt, gboolean (*callback)(gpointer))
     return 0;
 }
 
+/********************************************************************************
+Description : Private_talk
+Parameter   : char *msg, char *str_peer
+Return      : int (0 == success, -1 == failed)
+Side effect :
+Author      : zhq
+Date        : 2018.9.4
+********************************************************************************/
 int post_msg_unicast(char *str_peer, char *msg)
 {
+    //×ªÒå;
+    char escape_str_peer[1024], escape_msg[1024];
+    escape_string(str_peer, escape_str_peer);
+    escape_string(msg, escape_msg);
+
+    //¹¹ÔìÊý¾Ý°ü
+    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
+    pkg->package_sequence = send_package_sequence++;
+    pkg->ver = 0x1;
+    strcat(escape_str_peer, ",");
+    //   memcpy(pkg->payload, "/1", strlen("/1"));
+    memcpy(pkg->payload, escape_str_peer, strlen(escape_str_peer));
+    memcpy(pkg->payload + strlen(escape_str_peer), escape_msg, strlen(escape_msg));
+    pkg->len = strlen(escape_str_peer) + strlen(escape_msg);
+
+    //·¢ËÍ
+    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    return 0;
+}
+
+/********************************************************************************
+Description : Public_talk
+Parameter   : char *msg, unsigned int Group_Id
+Return      : int (0 == success, -1 == failed)
+Side effect :
+Author      : zhq
+Date        : 2018.9.4
+********************************************************************************/
+int post_msg_multicast(unsigned int GroupId, char *msg)
+{
+    //×ªÒå;
+    char Group_Id[100], escape_msg[1024];
+    snprintf(Group_Id, 5, "%d", GroupId);
+    escape_string(msg, escape_msg);
+
+    //¹¹ÔìÊý¾Ý°ü
+    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
+    pkg->package_sequence = send_package_sequence++;
+    pkg->ver = 0x1;
+    strcat(Group_Id, ",");
+    memcpy(pkg->payload, "$$", strlen("$$"));
+    memcpy(pkg->payload + strlen("$$"), Group_Id, strlen(Group_Id));
+    memcpy(pkg->payload + strlen(Group_Id) + strlen("$$"), escape_msg, strlen(escape_msg));
+    pkg->len = strlen("$$") + strlen(escape_msg) + strlen(Group_Id);
+
+    //·¢ËÍ
+    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    return 0;
+}
+
+/********************************************************************************
+Description : Reg_cb_recv_unicast
+Parameter   : void (*callback)
+Return      : None
+Side effect :
+Author      : zhq
+Date        : 2018.9.4
+********************************************************************************/
+void reg_cb_recv_unicast(gboolean (*callback)(gpointer)) //Ë½ÁÄÏûÏ¢µ½´ï,µ÷ÓÃ¡£
+{
+    cb_recv_unicast = callback;
+}
+
+void reg_cb_recv_multicast(gboolean (*callback)(gpointer)) //ÈºÁÄ½ÓÊÕ»Øµ÷¡£Á¢¼´·µ»Ø
+{
+    cb_recv_multicast = callback;
+}
+
+/********************************************************************************
+Description : Req_Search_Contacts
+Parameter   : char *keyword void (*callback)(char *contacts_raw)
+Return      : int (0 == success, -1 == failed)
+Side effect :
+Author      : zhq
+Date        : 2018.9.4
+********************************************************************************/
+int req_search_contacts(char *keyword, gboolean (*callback)(gpointer))
+{
+    cb_req_search_contacts = callback;
+    char escaped_keyword[1024];
+    escape_string(keyword, escaped_keyword); //×ªÒå
+
+    //¹¹ÔìÊý¾Ý°ü£»
+    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
+    pkg->package_sequence = send_package_sequence++;
+    pkg->ver = 0x1;
+
+    //strcat(escaped_username , ",");
+    memcpy(pkg->payload, "/5", strlen("/5"));
+    memcpy(pkg->payload + strlen("/5"), escaped_keyword, strlen(escaped_keyword));
+    //memcpy(pkg->payload + strlen(escaped_username) + strlen("\2"), escape_msg, strlen(escape_msg));
+    pkg->len = strlen("\5") + strlen(escaped_keyword);
+
+    //·¢ËÍ
+    write(sockfd, pkg, sizeof(Package) + pkg->len);
     return 0;
 }
 
@@ -147,6 +257,8 @@ static void *pthread(void *arg)
     std::cout << "接收线程，启动！" << std::endl;
 
     char msg[1024];
+    static Entity self;
+    static Entity contacts[20];
 
     for (;;)
     {
@@ -161,7 +273,7 @@ static void *pthread(void *arg)
                 {
                     printf("[Error] Connection Lost\n");
                     if (cb_connection_lost)
-                        g_idle_add(cb_connection_lost, (void*)10086);
+                        g_idle_add(cb_connection_lost, (void *)10086);
                 }
                 close(sockfd);
                 sockfd = socket(AF_INET, SOCK_STREAM, 0); //tcp
@@ -206,25 +318,36 @@ static void *pthread(void *arg)
         }
         msg[len] = '\0';
 
+        int sizeofEntity = 38;
+
         // 解包，调用回调
         Package *pkg = (Package *)msg;
         if (pkg->payload[0] == '/' && pkg->payload[1] == '0')
-        { // /0 login
-            if (pkg->payload[2] == '1') //success
-                g_idle_add(cb_req_authentication, (void*)1);
+        {                                 // /0 login
+            if (pkg->len >= sizeofEntity) //success
+            {
+                memcpy(&contacts[i], &pkg->payload[2 + i * sizeofEntity], sizeofEntity);
+                g_idle_add(cb_req_authentication, (void *)&self);
+            }
+
             else
-                g_idle_add(cb_req_authentication, (void*)0);
+                g_idle_add(cb_req_authentication, (void *)0);
         }
         else if (pkg->payload[0] == '/' && pkg->payload[1] == '1')
-        { // /1 register
-            if (pkg->payload[2] == '1')  //success
-                g_idle_add(cb_req_register, (void*)1);
+        {                               // /1 register
+            if (pkg->payload[2] == '1') //success
+                g_idle_add(cb_req_register, (void *)1);
             else
-                g_idle_add(cb_req_register, (void*)0);
+                g_idle_add(cb_req_register, (void *)0);
         }
         else if (pkg->payload[0] == '/' && pkg->payload[1] == '2')
         { // /2 contacts
-            g_idle_add(cb_req_contacts, &pkg->payload[2]);
+            for (int i = 0; i < (pkg->len / sizeofEntity); i++)
+            {
+                memcpy(&contacts[i], &pkg->payload[2 + i * sizeofEntity], sizeofEntity);
+            }
+
+            g_idle_add(cb_req_contacts, contacts);
         }
 
         printf("recv %s from server\n", pkg->payload);

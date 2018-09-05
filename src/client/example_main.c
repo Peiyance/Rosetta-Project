@@ -1,7 +1,8 @@
-#include <iostream>
+#include <stdio.h>
 #include <unistd.h>
 #include <gtk/gtk.h>
 #include "connector.h"
+#include "common.h"
 
 
 char remoteIP[] = "10.211.55.2";
@@ -9,7 +10,6 @@ short remotePort = 8888;
 int count = 0;
 GtkWidget *window;
 
-void cb_req_authentication(int result);
 gboolean on_finish(gpointer data);
 void cb_connection_lost(int error_code);
 
@@ -18,11 +18,12 @@ void on_button_clicked(GtkWidget *button, gpointer userdata)
     char username[] = "username,x\\xx\\,\\";
     char password[] = "pswwwwwfse";
 
-    req_authentication(username, password, on_finish);
+    req_contacts(on_finish);
 }
 
 gboolean on_finish(gpointer data)
 {
+    Entity *contacts = (Entity*)data;
     if (data)
          g_print("登陆结果：1\n", data);
      else
@@ -37,15 +38,10 @@ gboolean on_finish(gpointer data)
     return FALSE;
 }
 
-void cb_req_authentication(int result)
-{
-    
-    g_idle_add(on_finish, NULL);
-}
 
 int main(int argc, char *argv[])
 {
-    std::cout << "Hello World!" << std::endl;
+    //std::cout << "Hello World!" << std::endl;
     init_connector(remoteIP, remotePort);
 
     //if (!g_thread_supported()) //如果gthread沒有被初始化
