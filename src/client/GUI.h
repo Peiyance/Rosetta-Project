@@ -37,5 +37,7 @@ void on_click_friend(GtkWidget* widget, GdkEvent* event, Entity* who);
 void on_click_group(GtkWidget* widget, GdkEvent* event, Entity* who);
 void test_cb(gpointer x, GtkTextView* test);
 
+//friends_groups_settings.cpp
+void load_add_new_friend_window();
 
 #endif
