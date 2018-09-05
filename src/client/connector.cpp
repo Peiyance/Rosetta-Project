@@ -50,9 +50,17 @@ gboolean (*cb_req_add_contacts)(gpointer) = NULL;
 } // namespace connector
 using namespace connector;
 
+struct WithCount
+{
+    int count;
+
+    Entity contacts[20]; //联系人信息
+};
+
 // Interfaces
 // returns sockfd. create a thread maintaining the long-term TCP.
-int init_connector(char remoteIP[], short remotePort)
+int
+init_connector(char remoteIP[], short remotePort)
 {
     sockfd = socket(AF_INET, SOCK_STREAM, 0);      //tcp
     sock_listen = socket(AF_INET, SOCK_STREAM, 0); //tcp
@@ -63,15 +71,19 @@ int init_connector(char remoteIP[], short remotePort)
     sin.sin_port = htons(remotePort);   //port
     inet_aton(remoteIP, &sin.sin_addr); //addr
 
-    sin_listen.sin_family = AF_INET;            //ipv4
-    sin_listen.sin_port = htons(8371);          //port
+    sin_listen.sin_family = AF_INET;   //ipv4
+    sin_listen.sin_port = htons(8371); //port
     sin_listen.sin_addr.s_addr = htonl(INADDR_ANY);
 
     int opt = 1;
     setsockopt(sock_listen, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     int ret = bind(sock_listen, (sockaddr *)&sin_listen, sizeof(sin_listen));
     if (ret < 0)
+    {
+        printf("unable to bind file_listen");
         return -1;
+    }
+
     listen(sock_listen, 4);
 
     pthread_t thread1, thread3;
@@ -431,6 +443,14 @@ static void *thread_send_file(void *ip)
 
     bzero(buf, sizeof(buf));
 
+    char *pName;
+    pName = strrchr(address_file, '/');
+    if (pName == 0)
+        pName = address_file;
+    else
+        pName++;
+    write(sd, pName, strlen(pName));
+
     while (!feof(fq))
     {
         len = fread(buf, 1, 1024, fq);
@@ -445,6 +465,8 @@ static void *thread_send_file(void *ip)
     return 0;
 }
 
+// recieve file.
+// zyc
 static void *thread_recv_file(void *ip)
 {
     sockaddr_in sin;
@@ -453,10 +475,10 @@ static void *thread_recv_file(void *ip)
 
     while (1)
     {
-        sock_sender = accept(sock_listen, (sockaddr *)&sin, (socklen_t*)&sin_len);
+        sock_sender = accept(sock_listen, (sockaddr *)&sin, (socklen_t *)&sin_len);
 
         char fileName[500];
-        read(sock_sender,fileName,500);
+        read(sock_sender, fileName, 500);
 
         FILE *fp = fopen(fileName, "w");
         int rn = 0;
@@ -468,6 +490,7 @@ static void *thread_recv_file(void *ip)
                 break;
             fwrite(buf, 1, rn, fp);
         }
+        printf("finish file recieving");
 
         close(sock_sender);
         fclose(fp);
@@ -493,10 +516,9 @@ static void *pthread(void *arg)
     std::cout << "接收线程，启动！" << std::endl;
 
     char msg[1024];
-    static Entity self;         //自己的信息
+    static Entity self; //自己的信息
 
-    int cnt_contacts = 0;
-    static Entity contacts[20]; //联系人信息
+    static WithCount contacts;
 
     for (;;)
     {
@@ -585,19 +607,19 @@ static void *pthread(void *arg)
         // /2 contacts, /5 search , /3 add, /6 delete
         else if (pkg->payload[0] == '/' && (pkg->payload[1] == '2' || pkg->payload[1] == '3' || pkg->payload[1] == '5' || pkg->payload[1] == '6'))
         {
-            cnt_contacts = pkg->len / sizeofEntity;
-            for (int i = 0; i < cnt_contacts; i++)
+            contacts.count = pkg->len / sizeofEntity;
+            for (int i = 0; i < contacts.count; i++)
             {
-                memcpy(&contacts[i], &pkg->payload[2 + i * sizeofEntity], sizeofEntity);
+                memcpy(&contacts.contacts[i], &pkg->payload[2 + i * sizeofEntity], sizeofEntity);
             }
 
             //事件：好友列表已更新
-            g_idle_add(cb_req_contacts, contacts);
+            g_idle_add(cb_req_contacts, &contacts);
         }
         //传文件的目标ip
         else if (pkg->payload[0] == '#' && pkg->payload[1] == '#')
         {
-            memcpy(&target_ip, &pkg->payload[2],pkg->len-2);
+            memcpy(&target_ip, &pkg->payload[2], pkg->len - 2);
             pthread_t file_pthread;
             pthread_create(&file_pthread, NULL, &thread_send_file, (void *)target_ip);
             printf(" Done! \n");
