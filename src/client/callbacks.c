@@ -13,12 +13,20 @@ void msgbox(const char* msg)
 	gtk_widget_show_all(pop);
 }
 
+gboolean cb_contacts(gpointer data, int count)
+{
+
+}
+
 gboolean cb_auth(gpointer data)
 {
 	if(data) {
 		//success
 		gtk_widget_destroy(login_window);
-		// Entity* e = (Entity*) data;
+		// myself = (Entity*) data;
+		// load_main_window(e->nickname,e->avatar_id,a,1,b,0);
+		// req_contacts();		
+		// req_groups();
 		// ****** test code
 		Entity *e = (Entity*) malloc(sizeof(Entity));
 		memcpy(e->nickname, "heiheihei\0", sizeof(e->nickname));
@@ -28,8 +36,8 @@ gboolean cb_auth(gpointer data)
 	    memcpy(a[0].nickname, "test", sizeof(a[0].nickname));
 	    b[0].avatar_id = 0;
 	    memcpy(b[0].nickname, "test", sizeof(b[0].nickname));
-	    // ****** test code end 
-	    load_main_window(e->nickname,e->avatar_id,a,1,b,0);	
+	    load_main_window(e->nickname,e->avatar_id,a,1,b,1);
+	    //* ****** test code end 
 	}else{
 		//error
 		msgbox("验证失败，请检查用户名和密码!");

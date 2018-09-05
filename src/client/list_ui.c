@@ -5,6 +5,38 @@
 	> Mail: 
 	> Created Time: Mon 03 Sep 2018 07:29:03 PM CST
  ************************************************************************/
+void load_information(GtkWidget* parent, Entity* list, int cnt, int is_friend)
+{
+    for(int i = 0; i < cnt; i++)
+    {
+        GtkWidget *eventbox = gtk_event_box_new();
+        GtkWidget *boxinfo = gtk_hbox_new(FALSE,0);
+        gtk_container_add(GTK_CONTAINER(eventbox), boxinfo);
+        char avatar_dir_now[40];
+        sprintf(avatar_dir_now, "./imgs/avatars/%02d.png", list[i].avatar_id);
+        GtkWidget *img = gtk_image_new_from_file(avatar_dir_now);
+        gtk_box_pack_start(GTK_BOX(boxinfo),img,FALSE,FALSE,10);
+        GtkWidget *username_lable = gtk_label_new(list[i].nickname);
+        gtk_box_pack_start(GTK_BOX(boxinfo),username_lable,FALSE,FALSE,0);
+        gtk_box_pack_start(GTK_BOX(parent),eventbox,FALSE,FALSE,3);
+        if(is_friend){
+            g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(on_click_friend), &list[i]);
+        }else{
+            g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(on_click_group), &list[i]);
+        }
+     }
+}
+
+void load_friend_info(Entity* list, int cnt)
+{
+
+}
+
+void load_group_info(Entity* list, int cnt)
+{
+
+}
+
 void load_main_window(char *username,int avatar_id,Entity *friends_list,int friend_num,Entity *groups_list,int group_num)
 {
     //===========================主界面main_window=============================
@@ -44,38 +76,44 @@ void load_main_window(char *username,int avatar_id,Entity *friends_list,int frie
                     GtkWidget *friends_expander = gtk_expander_new("my friends");
                         GtkWidget *friends_listbox = gtk_vbox_new(FALSE,0) ;
                         gtk_container_add(GTK_CONTAINER(friends_expander),friends_listbox);
-                            for(int i=0;i<friend_num;i++)
-                            {
-                                GtkWidget *eventbox = gtk_event_box_new();
-                                GtkWidget *boxinfo = gtk_hbox_new(FALSE,0);
-                                gtk_container_add(GTK_CONTAINER(eventbox), boxinfo);
-                                char avatar_dir_now[40];
-                                sprintf(avatar_dir_now, "./imgs/avatars/%02d.png", friends_list[i].avatar_id);
-                                GtkWidget *img = gtk_image_new_from_file(avatar_dir_now);
-                                gtk_box_pack_start(GTK_BOX(boxinfo),img,FALSE,FALSE,10);
-                                GtkWidget *username_lable = gtk_label_new(friends_list[i].nickname);
-                                gtk_box_pack_start(GTK_BOX(boxinfo),username_lable,FALSE,FALSE,0);
-                                gtk_box_pack_start(GTK_BOX(friends_listbox),eventbox,FALSE,FALSE,3);
-                                g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(on_click_friend), &friends_list[i]);
-                             }
+                        // load_information(friends_listbox, friends_list, friend_num, 1);
+                        
+                            // for(int i=0;i<0;i++)
+                            // {
+                            //     printf("wtf!");
+                            //     GtkWidget *eventbox = gtk_event_box_new();
+                            //     GtkWidget *boxinfo = gtk_hbox_new(FALSE,0);
+                            //     gtk_container_add(GTK_CONTAINER(eventbox), boxinfo);
+                            //     char avatar_dir_now[40];
+                            //     sprintf(avatar_dir_now, "./imgs/avatars/%02d.png", friends_list[i].avatar_id);
+                            //     GtkWidget *img = gtk_image_new_from_file(avatar_dir_now);
+                            //     gtk_box_pack_start(GTK_BOX(boxinfo),img,FALSE,FALSE,10);
+                            //     GtkWidget *username_lable = gtk_label_new(friends_list[i].nickname);
+                            //     gtk_box_pack_start(GTK_BOX(boxinfo),username_lable,FALSE,FALSE,0);
+                            //     gtk_box_pack_start(GTK_BOX(friends_listbox),eventbox,FALSE,FALSE,3);
+                            //     g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(on_click_friend), &friends_list[i]);
+                            //  }
+                        
                         gtk_box_pack_start(GTK_BOX(box_div),friends_expander,FALSE,FALSE,0);
                     GtkWidget *groups_expander = gtk_expander_new("my groups");
                         GtkWidget *groups_listbox = gtk_vbox_new(FALSE,0);
                         gtk_container_add(GTK_CONTAINER(groups_expander),groups_listbox);
-                                for(int i=0;i<friend_num;i++)
-                            {
-                                GtkWidget *eventbox = gtk_event_box_new();
-                                GtkWidget *boxinfo = gtk_hbox_new(FALSE,0);
-                                gtk_container_add(GTK_CONTAINER(eventbox), boxinfo);
-                                char avatar_dir_now[40];
-                                sprintf(avatar_dir_now, "./imgs/avatars/%02d.png", groups_list[i].avatar_id);
-                                GtkWidget *img = gtk_image_new_from_file(avatar_dir_now);
-                                gtk_box_pack_start(GTK_BOX(boxinfo),img,FALSE,FALSE,10);
-                                GtkWidget *username_lable = gtk_label_new(groups_list[i].nickname);
-                                gtk_box_pack_start(GTK_BOX(boxinfo),username_lable,FALSE,FALSE,0);
-                                gtk_box_pack_start(GTK_BOX(groups_listbox),eventbox,FALSE,FALSE,3);
-                                g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(on_click_group), &groups_list[i]);
-                             }
+                            //load_information(groups_listbox, groups_list, 1, 1);
+                            //     for(int i=0;i<0;i++)
+                            // {
+                            //     printf("wtf!");
+                            //     GtkWidget *eventbox = gtk_event_box_new();
+                            //     GtkWidget *boxinfo = gtk_hbox_new(FALSE,0);
+                            //     gtk_container_add(GTK_CONTAINER(eventbox), boxinfo);
+                            //     char avatar_dir_now[40];
+                            //     sprintf(avatar_dir_now, "./imgs/avatars/%02d.png", groups_list[i].avatar_id);
+                            //     GtkWidget *img = gtk_image_new_from_file(avatar_dir_now);
+                            //     gtk_box_pack_start(GTK_BOX(boxinfo),img,FALSE,FALSE,10);
+                            //     GtkWidget *username_lable = gtk_label_new(groups_list[i].nickname);
+                            //     gtk_box_pack_start(GTK_BOX(boxinfo),username_lable,FALSE,FALSE,0);
+                            //     gtk_box_pack_start(GTK_BOX(groups_listbox),eventbox,FALSE,FALSE,3);
+                            //     g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(on_click_group), &groups_list[i]);
+                            //  }
                         gtk_box_pack_start(GTK_BOX(box_div),groups_expander,FALSE,FALSE,0);
                     gtk_container_add(GTK_CONTAINER(main_viewport),box_div);
         //=============================
@@ -87,5 +125,4 @@ void load_main_window(char *username,int avatar_id,Entity *friends_list,int frie
     gtk_container_add(GTK_CONTAINER(main_window),main_box );
 
     gtk_widget_show_all(main_window);
-
 }
