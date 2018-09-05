@@ -39,9 +39,10 @@ void test_cb(gpointer x, GtkTextView* test);
 void search_user(GtkWidget* entry);
 void search_friends(GtkWidget* entry);
 
-//friends_groups_settings.cpp
+//friends_groups_settings.c
 GtkWidget* result_main_viewport, *result_show_box;
 void load_add_new_friend_window();
 
-
+//chat_personal_window.c
+void chat_personal_windew();
 #endif
