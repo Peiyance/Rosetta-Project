@@ -17,7 +17,19 @@ gboolean cb_auth(gpointer data)
 {
 	if(data) {
 		//success
-		msgbox("LOGIN SUCCESS!");
+		gtk_widget_destroy(login_window);
+		// Entity* e = (Entity*) data;
+		// ****** test code
+		Entity *e = (Entity*) malloc(sizeof(Entity));
+		memcpy(e->nickname, "heiheihei", sizeof(e->nickname));
+		e->avatar_id = 0;
+	    Entity a[1], b[1];
+	    a[0].avatar_id = 0;
+	    memcpy(a[0].nickname, "test", sizeof(a[0].nickname));
+	    b[0].avatar_id = 0;
+	    memcpy(b[0].nickname, "test", sizeof(b[0].nickname));
+	    // ****** test code end 
+	    load_main_window(e->nickname,e->avatar_id,a,1,b,0);	
 	}else{
 		//error
 		msgbox("验证失败，请检查用户名和密码!");
@@ -59,4 +71,14 @@ void on_click_login(gpointer button, gpointer* entries)
 {
 	gchar* username = gtk_entry_get_text(entries[0]), *pwd = gtk_entry_get_text(entries[1]);
 	req_authentication(username, pwd, cb_auth);
+}
+
+void on_click_friend(gpointer x, gpointer data)
+{
+	msgbox("hhh");
+}
+
+void on_click_group(gpointer x, gpointer data)
+{
+	msgbox("kkk");
 }

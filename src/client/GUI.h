@@ -15,11 +15,14 @@ void load_login_window();
 void load_signup_window();
 
 //list_ui.c
+GtkWidget *main_window;
 void load_main_window(char *username, int avator_id, Entity *friends_list, int friend_num, Entity *groups_list, int group_num);
 
 //callbacks.c
 void on_click_signup_return(gpointer button, gpointer window);
 void on_click_signup(gpointer button, gpointer* entries);	
 void on_click_login(gpointer button, gpointer* entries);
+void on_click_friend(gpointer x, gpointer data);
+void on_click_group(gpointer x, gpointer data);
 
 #endif

@@ -8,7 +8,8 @@
 void load_main_window(char *username,int avatar_id,Entity *friends_list,int friend_num,Entity *groups_list,int group_num)
 {
     //===========================主界面main_window=============================
-    GtkWidget *main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    g_signal_connect(G_OBJECT(main_window), "delete_event", G_CALLBACK(gtk_main_quit), NULL);
     gtk_window_set_default_size (GTK_WINDOW(main_window),320,700);
     gtk_window_set_position(GTK_WINDOW(main_window),GTK_WIN_POS_CENTER);
     gtk_window_set_title(GTK_WINDOW(main_window),"Rosetta");
@@ -43,14 +44,17 @@ void load_main_window(char *username,int avatar_id,Entity *friends_list,int frie
                         gtk_container_add(GTK_CONTAINER(friends_expander),friends_listbox);
                             for(int i=0;i<friend_num;i++)
                             {
+                                GtkWidget *eventbox = gtk_event_box_new();
                                 GtkWidget *boxinfo = gtk_hbox_new(FALSE,0);
+                                gtk_container_add(GTK_CONTAINER(eventbox), boxinfo);
                                  char avatar_dir_now[20];
                                  sprintf(avatar_dir_now, "./imgs/avatars/%02d.png", friends_list[i].avatar_id);
                                 GtkWidget *img = gtk_image_new_from_file(avatar_dir_now);
                                 gtk_box_pack_start(GTK_BOX(boxinfo),img,FALSE,FALSE,10);
                                 GtkWidget *username_lable = gtk_label_new(friends_list[i].nickname);
                                 gtk_box_pack_start(GTK_BOX(boxinfo),username_lable,FALSE,FALSE,0);
-                                gtk_box_pack_start(GTK_BOX(friends_listbox),boxinfo,FALSE,FALSE,3);
+                                gtk_box_pack_start(GTK_BOX(friends_listbox),eventbox,FALSE,FALSE,3);
+                                g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(on_click_friend), friends_list[i].id);
                              }
                         gtk_box_pack_start(GTK_BOX(box_div),friends_expander,FALSE,FALSE,0);
                     GtkWidget *groups_expander = gtk_expander_new("my groups");
@@ -58,14 +62,17 @@ void load_main_window(char *username,int avatar_id,Entity *friends_list,int frie
                         gtk_container_add(GTK_CONTAINER(groups_expander),groups_listbox);
                                 for(int i=0;i<friend_num;i++)
                             {
+                                GtkWidget *eventbox = gtk_event_box_new();
                                 GtkWidget *boxinfo = gtk_hbox_new(FALSE,0);
+                                gtk_container_add(GTK_CONTAINER(eventbox), boxinfo);
                                 char avatar_dir_now[20];
                                 sprintf(avatar_dir_now, "./imgs/avatars/%02d.png", groups_list[i].avatar_id);
                                 GtkWidget *img = gtk_image_new_from_file(avatar_dir_now);
                                 gtk_box_pack_start(GTK_BOX(boxinfo),img,FALSE,FALSE,10);
                                 GtkWidget *username_lable = gtk_label_new(groups_list[i].nickname);
                                 gtk_box_pack_start(GTK_BOX(boxinfo),username_lable,FALSE,FALSE,0);
-                                gtk_box_pack_start(GTK_BOX(groups_listbox),boxinfo,FALSE,FALSE,3);
+                                gtk_box_pack_start(GTK_BOX(groups_listbox),eventbox,FALSE,FALSE,3);
+                                g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(on_click_group), groups_list[i].id);
                              }
                         gtk_box_pack_start(GTK_BOX(box_div),groups_expander,FALSE,FALSE,0);
                     gtk_container_add(GTK_CONTAINER(main_viewport),box_div);

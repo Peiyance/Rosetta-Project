@@ -77,7 +77,8 @@ void load_login_window()
    // if(login_img_logo == NULL)g_print("logo image load failed!\n");
    // gtk_table_attach_defaults(GTK_TABLE(main_table),login_img_logo,0,18,0,4);
     //=========================输入用户名lable================================
-    login_lable_name = gtk_label_new("username");
+    login_lable_name = gtk_label_new(NULL);
+    // gtk_label_set_markup(GTK_LABEL(login_lable_name),("<span foreground=\"white\">Username</span>"));
     gtk_misc_set_alignment(GTK_MISC(login_lable_name),0,0);//设定文本在左方
     gtk_table_attach_defaults(GTK_TABLE(input_box),login_lable_name,0,1,0,1);
     //=========================输入用户名entry===============================
@@ -85,7 +86,8 @@ void load_login_window()
     login_entry_name = gtk_entry_new();
     gtk_table_attach_defaults(GTK_TABLE(input_box),login_entry_name,0,1,1,2);
     //=========================输入密码lable================================
-    login_lable_psw = gtk_label_new("password");
+    login_lable_psw = gtk_label_new(NULL);
+    // gtk_label_set_markup(GTK_LABEL(login_lable_psw),("<span foreground=\"white\">Password</span>"));
     gtk_misc_set_alignment(GTK_MISC(login_lable_psw), 0, 0);
     gtk_table_attach_defaults(GTK_TABLE(input_box),login_lable_psw,0,1,2,3);
     //=========================输入密码entry===============================
@@ -157,21 +159,24 @@ void load_signup_window()
     //if(signup_img_logo == NULL)g_print("logo image load failed!\n");
     //gtk_table_attach_defaults(GTK_TABLE(main_table),signup_img_logo,0,18,0,2);
     //=========================输入用户名lable================================
-    signup_lable_name = gtk_label_new("username");
+    signup_lable_name = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(signup_lable_name),("<span foreground=\"white\">Username</span>"));
     gtk_table_attach_defaults(GTK_TABLE(main_table),signup_lable_name,0,5,0,1);
     //============================输入用户名entry===============================
     signup_entry_name = gtk_entry_new();
     gtk_table_attach_defaults(GTK_TABLE(main_table),signup_entry_name,5,18,0,1);
     //============================输入密码lable================================
-    signup_lable_psw = gtk_label_new("password");
+    signup_lable_psw = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(signup_lable_psw),("<span foreground=\"white\">Password</span>"));
     gtk_table_attach_defaults(GTK_TABLE(main_table),signup_lable_psw,0,5,1,2);
     //============================输入密码entry===============================
     signup_entry_psw = gtk_entry_new();
     gtk_table_attach_defaults(GTK_TABLE(main_table),signup_entry_psw,5,18,1,2);
     gtk_entry_set_visibility(GTK_ENTRY(signup_entry_psw), FALSE);
    //============================重复输入密码lable================================
-    signup_lable_psw = gtk_label_new("repeat password");
-    gtk_table_attach_defaults(GTK_TABLE(main_table),signup_lable_psw,0,5,2,3);
+    signup_lable_repeat_psw = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(signup_lable_repeat_psw),("<span foreground=\"white\">Confirm</span>"));
+    gtk_table_attach_defaults(GTK_TABLE(main_table),signup_lable_repeat_psw,0,5,2,3);
     //============================重复输入密码entry===============================
     signup_entry_repeat_psw = gtk_entry_new();
     gtk_table_attach_defaults(GTK_TABLE(main_table),signup_entry_repeat_psw,5,18,2,3);
