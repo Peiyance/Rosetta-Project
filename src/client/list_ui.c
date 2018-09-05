@@ -43,8 +43,10 @@ void load_group_info(Entity* list, int cnt){
     load_information(groups_expander, groups_listbox, list, cnt, 0);
 }
 
-void load_main_window(char *username,int avatar_id,Entity *friends_list,int friend_num,Entity *groups_list,int group_num)
+void load_main_window()
 {
+    char* username = myself->nickname;
+    int avatar_id = myself->avatar_id;
     //===========================主界面main_window=============================
     main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     g_signal_connect(G_OBJECT(main_window), "delete_event", G_CALLBACK(gtk_main_quit), NULL);
