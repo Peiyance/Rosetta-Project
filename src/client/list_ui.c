@@ -8,6 +8,12 @@
 GtkWidget *main_window, *friends_expander, *groups_expander, *friends_listbox = NULL, *groups_listbox = NULL;
 GtkWidget *results_expander = NULL, *results_listbox = NULL;
 
+void refresh_label(GtkExpander* expander, const char* prefix, int cnt){
+    static char tmp[40];
+    sprintf(tmp, "%s (%d)", prefix, cnt);
+    gtk_expander_set_label(expander, tmp);
+}
+
 void search_friends(GtkWidget* entry)
 {
     char* pattern = gtk_entry_get_text(entry);
@@ -26,15 +32,17 @@ void search_friends(GtkWidget* entry)
         }
     }
     load_information(results_expander, &results_listbox, list, cnt, on_click_friend);
+    refresh_label(results_expander, "Search Results ", cnt);
 }
 
 void load_friend_info(){
-    printf("addr: %d\n", friends_listbox);
     load_information(friends_expander, &friends_listbox, friendlist, friend_cnt, on_click_friend);
+    refresh_label(friends_expander, "Friends ", friend_cnt);
 }
 
 void load_group_info(){
     load_information(groups_expander, &groups_listbox, grouplist, group_cnt, on_click_group);
+    refresh_label(groups_expander, "Groups ", group_cnt);
 }
 
 void load_main_window()
@@ -76,13 +84,13 @@ void load_main_window()
             GtkWidget *main_viewport = gtk_viewport_new(NULL,NULL);/*创建文本视图构件*/
                     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(main_scrolledwindow),main_viewport);
                 GtkWidget *box_div = gtk_vbox_new(FALSE,0);
-                    results_expander = gtk_expander_new("Search Results");
+                    results_expander = gtk_expander_new("Search Results (0)");
                         gtk_box_pack_start(GTK_BOX(box_div),results_expander,FALSE,FALSE,0);
                     gtk_expander_set_expanded(results_expander, TRUE);
-                    friends_expander = gtk_expander_new("My Friends");
+                    friends_expander = gtk_expander_new("My Friends (0)");
                         gtk_box_pack_start(GTK_BOX(box_div),friends_expander,FALSE,FALSE,0);
                     gtk_expander_set_expanded(friends_expander, TRUE);
-                    groups_expander = gtk_expander_new("My Groups");
+                    groups_expander = gtk_expander_new("My Groups (0)");
                         gtk_box_pack_start(GTK_BOX(box_div),groups_expander,FALSE,FALSE,0);
                     gtk_expander_set_expanded(groups_expander, TRUE);
                     gtk_container_add(GTK_CONTAINER(main_viewport),box_div);
