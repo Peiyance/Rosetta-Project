@@ -1,20 +1,11 @@
-
-#include <gtk/gtk.h>
-#include "sungtk_interface.h" 
+#include "GUI.h"
 /*************************************************************************
 	> File Name: main.c
 	> Author: 程苗苗
 	> Mail: 
 	> Created Time: Mon 03 Sep 2018 07:29:03 PM CST
  ************************************************************************/
- typedef struct
- {
-     int id,avator_id;
-     char username[30];
- }Entity;
- Entity a[20],b[20];
 void load_main_window(char *username,int avator_id,Entity *friends_list,int friend_num,Entity *groups_list,int group_num)
-
 {
     //===========================主界面main_window=============================
     GtkWidget *main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
