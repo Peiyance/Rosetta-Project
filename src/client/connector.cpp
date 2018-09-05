@@ -31,6 +31,7 @@ struct Package
     char payload[0];
 };
 
+// 我们使用同步callback，类似于win中的PostMessage
 gboolean (*cb_req_contacts)(gpointer) = NULL;
 gboolean (*cb_req_authentication)(gpointer) = NULL;
 gboolean (*cb_req_register)(gpointer) = NULL;
@@ -91,6 +92,7 @@ int req_authentication(char *str_username, char *str_password, gboolean (*callba
     memcpy(pkg->payload + 2 + strlen(escaped_username), escaped_password, strlen(escaped_password));
     pkg->len = 2 + strlen(escaped_username) + strlen(escaped_password);
 
+    // 发包 返回
     write(sockfd, pkg, sizeof(Package) + pkg->len);
     return 0;
 }
@@ -114,6 +116,7 @@ int req_register(char *str_username, char *str_password, gboolean (*callback)(gp
     memcpy(pkg->payload + 2 + strlen(escaped_username), escaped_password, strlen(escaped_password));
     pkg->len = 2 + strlen(escaped_username) + strlen(escaped_password);
 
+    // 发包 返回
     write(sockfd, pkg, sizeof(Package) + pkg->len);
     return 0;
 }
@@ -134,11 +137,6 @@ int req_contacts(gboolean (*callback)(gpointer))
     return 0;
 }
 
-int req_edit_contacts(char *username, int opt, gboolean (*callback)(gpointer))
-{
-    return 0;
-}
-
 /********************************************************************************
 Description : Private_talk
 Parameter   : char *msg, char *str_peer
@@ -149,12 +147,12 @@ Date        : 2018.9.4
 ********************************************************************************/
 int post_msg_unicast(char *str_peer, char *msg)
 {
-    //×ªÒå;
+    //转义
     char escape_str_peer[1024], escape_msg[1024];
     escape_string(str_peer, escape_str_peer);
     escape_string(msg, escape_msg);
 
-    //¹¹ÔìÊý¾Ý°ü
+    //构造数据包
     Package *pkg = (Package *)new char[sizeof(Package) + 1024];
     pkg->package_sequence = send_package_sequence++;
     pkg->ver = 0x1;
@@ -164,7 +162,7 @@ int post_msg_unicast(char *str_peer, char *msg)
     memcpy(pkg->payload + strlen(escape_str_peer), escape_msg, strlen(escape_msg));
     pkg->len = strlen(escape_str_peer) + strlen(escape_msg);
 
-    //·¢ËÍ
+    // 发包 返回
     write(sockfd, pkg, sizeof(Package) + pkg->len);
     return 0;
 }
@@ -179,12 +177,12 @@ Date        : 2018.9.4
 ********************************************************************************/
 int post_msg_multicast(unsigned int GroupId, char *msg)
 {
-    //×ªÒå;
+    //转义
     char Group_Id[100], escape_msg[1024];
     snprintf(Group_Id, 5, "%d", GroupId);
     escape_string(msg, escape_msg);
 
-    //¹¹ÔìÊý¾Ý°ü
+    // 构造数据包
     Package *pkg = (Package *)new char[sizeof(Package) + 1024];
     pkg->package_sequence = send_package_sequence++;
     pkg->ver = 0x1;
@@ -194,7 +192,7 @@ int post_msg_multicast(unsigned int GroupId, char *msg)
     memcpy(pkg->payload + strlen(Group_Id) + strlen("$$"), escape_msg, strlen(escape_msg));
     pkg->len = strlen("$$") + strlen(escape_msg) + strlen(Group_Id);
 
-    //·¢ËÍ
+    // 发包 返回
     write(sockfd, pkg, sizeof(Package) + pkg->len);
     return 0;
 }
@@ -229,9 +227,9 @@ int req_search_contacts(char *keyword, gboolean (*callback)(gpointer))
 {
     cb_req_search_contacts = callback;
     char escaped_keyword[1024];
-    escape_string(keyword, escaped_keyword); //×ªÒå
+    escape_string(keyword, escaped_keyword); //转义
 
-    //¹¹ÔìÊý¾Ý°ü£»
+    //构造数据包
     Package *pkg = (Package *)new char[sizeof(Package) + 1024];
     pkg->package_sequence = send_package_sequence++;
     pkg->ver = 0x1;
@@ -240,9 +238,9 @@ int req_search_contacts(char *keyword, gboolean (*callback)(gpointer))
     memcpy(pkg->payload, "/5", strlen("/5"));
     memcpy(pkg->payload + strlen("/5"), escaped_keyword, strlen(escaped_keyword));
     //memcpy(pkg->payload + strlen(escaped_username) + strlen("\2"), escape_msg, strlen(escape_msg));
-    pkg->len = strlen("\5") + strlen(escaped_keyword);
+    pkg->len = strlen("/5") + strlen(escaped_keyword);
 
-    //·¢ËÍ
+    // 发送
     write(sockfd, pkg, sizeof(Package) + pkg->len);
     return 0;
 }
@@ -256,28 +254,28 @@ Author      : zhq
 Date        : 2018.9.4
 ********************************************************************************/
 
-int req_delete_contacts(char *username, char* contact_name, gboolean(*callback)(gpointer))
+int req_delete_contacts(char *username, char *contact_name, gboolean (*callback)(gpointer))
 {
-	cb_req_delete_contacts = callback;
+    cb_req_delete_contacts = callback;
 
-	char escaped_username[1024], escaped_contact_name[1024];
-	escape_string(username, escaped_username);
-	escape_string(contact_name, escaped_contact_name);    ///转义
+    char escaped_username[1024], escaped_contact_name[1024];
+    escape_string(username, escaped_username);
+    escape_string(contact_name, escaped_contact_name); ///转义
 
-	//构造数据包；
-	Package *pkg = (Package *)new char[sizeof(Package) + 1024];
-	pkg->package_sequence = send_package_sequence++;
-	pkg->ver = 0x1;
+    //构造数据包；
+    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
+    pkg->package_sequence = send_package_sequence++;
+    pkg->ver = 0x1;
 
-	strcat(escaped_username, ",");
-	memcpy(pkg->payload, "/6", strlen("/6"));
-	memcpy(pkg->payload + strlen("/6"), escaped_username, strlen(escaped_username));
-	memcpy(pkg->payload + strlen(escaped_username) + strlen("/6"), escaped_contact_name, strlen(escaped_contact_name));
-	pkg->len = strlen("/6") + strlen(escaped_username) + strlen(escaped_contact_name);
+    strcat(escaped_username, ",");
+    memcpy(pkg->payload, "/6", strlen("/6"));
+    memcpy(pkg->payload + strlen("/6"), escaped_username, strlen(escaped_username));
+    memcpy(pkg->payload + strlen(escaped_username) + strlen("/6"), escaped_contact_name, strlen(escaped_contact_name));
+    pkg->len = strlen("/6") + strlen(escaped_username) + strlen(escaped_contact_name);
 
-	//发送
-	write(sockfd, pkg, sizeof(Package) + pkg->len);
-	return 0;
+    //发送
+    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    return 0;
 }
 
 /********************************************************************************
@@ -289,28 +287,28 @@ Author      : zhq
 Date        : 2018.9.4
 ********************************************************************************/
 
-int req_add_contacts(char *username, char* contact_name, gboolean(*callback)(gpointer))
+int req_add_contacts(char *username, char *contact_name, gboolean (*callback)(gpointer))
 {
-	cb_req_add_contacts = callback;
+    cb_req_add_contacts = callback;
 
-	char escaped_username[1024], escaped_contact_name[1024];
-	escape_string(username, escaped_username);
-	escape_string(contact_name, escaped_contact_name);    ///转义
+    char escaped_username[1024], escaped_contact_name[1024];
+    escape_string(username, escaped_username);
+    escape_string(contact_name, escaped_contact_name); ///转义
 
-	//构造数据包；
-	Package *pkg = (Package *)new char[sizeof(Package) + 1024];
-	pkg->package_sequence = send_package_sequence++;
-	pkg->ver = 0x1;
+    //构造数据包；
+    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
+    pkg->package_sequence = send_package_sequence++;
+    pkg->ver = 0x1;
 
-	strcat(escaped_username, ",");
-	memcpy(pkg->payload, "/3", strlen("/3"));
-	memcpy(pkg->payload + strlen("/3"), escaped_username, strlen(escaped_username));
-	memcpy(pkg->payload + strlen(escaped_username) + strlen("/3"), escaped_contact_name, strlen(escaped_contact_name));
-	pkg->len = strlen("/3") + strlen(escaped_username) + strlen(escaped_contact_name);
+    strcat(escaped_username, ",");
+    memcpy(pkg->payload, "/3", strlen("/3"));
+    memcpy(pkg->payload + strlen("/3"), escaped_username, strlen(escaped_username));
+    memcpy(pkg->payload + strlen(escaped_username) + strlen("/3"), escaped_contact_name, strlen(escaped_contact_name));
+    pkg->len = strlen("/3") + strlen(escaped_username) + strlen(escaped_contact_name);
 
-	//发送
-	write(sockfd, pkg, sizeof(Package) + pkg->len);
-	return 0;
+    //发送
+    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    return 0;
 }
 
 /********************************************************************************
@@ -324,24 +322,24 @@ Date        : 2018.9.4
 
 int Get_Chat_record_Public(unsigned int GroupId, char *msg)
 {
-	//转义;
-	char Group_Id[100], escape_msg[1024];
-	snprintf(Group_Id, 5, "%d", GroupId);
-	escape_string(msg, escape_msg);
+    //转义;
+    char Group_Id[100], escape_msg[1024];
+    snprintf(Group_Id, 5, "%d", GroupId);
+    escape_string(msg, escape_msg);
 
-	//构造数据包
-	Package *pkg = (Package *)new char[sizeof(Package) + 1024];
-	pkg->package_sequence = send_package_sequence++;
-	pkg->ver = 0x1;
-	//	strcat(Group_Id, ",");
-	memcpy(pkg->payload, "/4", strlen("/4"));
-	memcpy(pkg->payload + strlen("/4"), Group_Id, strlen(Group_Id));
-	memcpy(pkg->payload + strlen(Group_Id) + strlen("/4"), escape_msg, strlen(escape_msg));
-	pkg->len = strlen("/4") + strlen(escape_msg) + strlen(Group_Id);
+    //构造数据包
+    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
+    pkg->package_sequence = send_package_sequence++;
+    pkg->ver = 0x1;
+    //	strcat(Group_Id, ",");
+    memcpy(pkg->payload, "/4", strlen("/4"));
+    memcpy(pkg->payload + strlen("/4"), Group_Id, strlen(Group_Id));
+    memcpy(pkg->payload + strlen(Group_Id) + strlen("/4"), escape_msg, strlen(escape_msg));
+    pkg->len = strlen("/4") + strlen(escape_msg) + strlen(Group_Id);
 
-	//发送
-	write(sockfd, pkg, sizeof(Package) + pkg->len);
-	return 0;
+    //发送
+    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    return 0;
 }
 
 /********************************************************************************
@@ -352,25 +350,25 @@ Side effect :
 Author      : zhq
 Date        : 2018.9.5
 ********************************************************************************/
-int File_private(char *address , char *username) {
+int File_private(char *address, char *username)
+{
 
-	//转义;
-	strcpy(address_file,address);
-	char escape_username[1024];
-	escape_string(username, escape_username);
-	//构造数据包
-	Package *pkg = (Package *)new char[sizeof(Package) + 1024];
-	pkg->package_sequence = send_package_sequence++;
-	pkg->ver = 0x1;
-	memcpy(pkg->payload, "#", strlen("#"));
-	memcpy(pkg->payload + strlen("#"), escape_username, strlen(escape_username));
-	//memcpy(pkg->payload + strlen(Group_Id) + strlen("/4"), escape_msg, strlen(escape_msg));
-	pkg->len = strlen("#") + strlen(escape_username);
-	//发送
-	write(sockfd, pkg, sizeof(Package) + pkg->len);
-	return 0;
+    //转义;
+    strcpy(address_file, address);
+    char escape_username[1024];
+    escape_string(username, escape_username);
+    //构造数据包
+    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
+    pkg->package_sequence = send_package_sequence++;
+    pkg->ver = 0x1;
+    memcpy(pkg->payload, "#", strlen("#"));
+    memcpy(pkg->payload + strlen("#"), escape_username, strlen(escape_username));
+    //memcpy(pkg->payload + strlen(Group_Id) + strlen("/4"), escape_msg, strlen(escape_msg));
+    pkg->len = strlen("#") + strlen(escape_username);
+    //发送
+    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    return 0;
 }
-
 
 /********************************************************************************
 Description : File_private_for_target
@@ -381,52 +379,52 @@ Author      : zhq
 Date        : 2018.9.5
 ********************************************************************************/
 
-static void * thread_send_file(void *ip) {
-	int     sd,rn;
-    struct sockaddr_in   client,server;
-    char    buf[1024];
-    FILE    *fq;
-    int     len,opt = 1;
-    if( ( sd = socket(AF_INET,SOCK_STREAM,0)) == -1 )
+static void *thread_send_file(void *ip)
+{
+    int sd, rn;
+    struct sockaddr_in client, server;
+    char buf[1024];
+    FILE *fq;
+    int len, opt = 1;
+    if ((sd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
         perror("socket");
         exit(1);
     }
 
-        bzero(&server,sizeof(server));
-        server.sin_family = AF_INET;
-        server.sin_port = htons(4000);
-        inet_aton((char *)ip,&server.sin_addr);
-        setsockopt(sd,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(opt));
+    bzero(&server, sizeof(server));
+    server.sin_family = AF_INET;
+    server.sin_port = htons(4000);
+    inet_aton((char *)ip, &server.sin_addr);
+    setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-        if( connect(sd,(struct sockaddr *)&server,sizeof(server)) < 0 )
-        {
-            perror("Connect");
-            close(sd);
-            exit(1);
-        }
-        if( ( fq = fopen(address_file,"rb") ) == NULL )
-        {
-            perror("File open");
-            close(sd);
-            exit(1);
-        }
-
-        bzero(buf,sizeof(buf));
-
-        while( !feof(fq) )
-        {
-            len = fread(buf,1,1024,fq);
-            if( len != write(sd,buf,len) )
-            {
-                perror("write");
-                break;
-            }
-
-        }
+    if (connect(sd, (struct sockaddr *)&server, sizeof(server)) < 0)
+    {
+        perror("Connect");
         close(sd);
-        fclose(fq);
-        return 0;
+        exit(1);
+    }
+    if ((fq = fopen(address_file, "rb")) == NULL)
+    {
+        perror("File open");
+        close(sd);
+        exit(1);
+    }
+
+    bzero(buf, sizeof(buf));
+
+    while (!feof(fq))
+    {
+        len = fread(buf, 1, 1024, fq);
+        if (len != write(sd, buf, len))
+        {
+            perror("write");
+            break;
+        }
+    }
+    close(sd);
+    fclose(fq);
+    return 0;
 }
 
 void reg_cb_connection_lost(gboolean (*callback)(gpointer))
@@ -434,14 +432,22 @@ void reg_cb_connection_lost(gboolean (*callback)(gpointer))
     cb_connection_lost = callback;
 }
 
+/********************************************************************************
+Description : 客户机接收线程
+Parameter   : 
+Return      : 
+Side effect :
+Author      : zyc
+Date        : 2018.9.5
+********************************************************************************/
 static void *pthread(void *arg)
 {
     int first_contact = 1;
     std::cout << "接收线程，启动！" << std::endl;
 
     char msg[1024];
-    static Entity self;
-    static Entity contacts[20];
+    static Entity self;         //自己的信息
+    static Entity contacts[20]; //联系人信息
 
     for (;;)
     {
@@ -501,14 +507,16 @@ static void *pthread(void *arg)
         }
         msg[len] = '\0';
 
-        int sizeofEntity = 38;
+        int sizeofEntity = 38; // 不知为何sizeof(Entity)是40
 
-        // 解包，调用回调
+        // 解包，PostMessage
         Package *pkg = (Package *)msg;
+        // /0 login
         if (pkg->payload[0] == '/' && pkg->payload[1] == '0')
-        {                                 // /0 login
+        {
             if (pkg->len >= sizeofEntity) //success
             {
+                //事件：登录结果
                 memcpy(&self, &pkg->payload[2], sizeofEntity);
                 g_idle_add(cb_req_authentication, (void *)&self);
             }
@@ -516,21 +524,35 @@ static void *pthread(void *arg)
             else
                 g_idle_add(cb_req_authentication, (void *)0);
         }
+        // /1 register
         else if (pkg->payload[0] == '/' && pkg->payload[1] == '1')
-        {                               // /1 register
+        {
             if (pkg->payload[2] == '1') //success
+                //事件：注册结果
                 g_idle_add(cb_req_register, (void *)1);
             else
                 g_idle_add(cb_req_register, (void *)0);
         }
-        else if (pkg->payload[0] == '/' && pkg->payload[1] == '2')
-        { // /2 contacts
+        // /2 contacts, /5 search , /3 add, /6 delete
+        else if (pkg->payload[0] == '/' && (pkg->payload[1] == '2' || pkg->payload[1] == '3' || pkg->payload[1] == '5' || pkg->payload[1] == '6'))
+        {
             for (int i = 0; i < (pkg->len / sizeofEntity); i++)
             {
                 memcpy(&contacts[i], &pkg->payload[2 + i * sizeofEntity], sizeofEntity);
             }
 
+            //事件：好友列表已更新
             g_idle_add(cb_req_contacts, contacts);
+        }
+        //群聊消息
+        else if (pkg->payload[0] == '$' && pkg->payload[1] == '$')
+        {
+            g_idle_add(cb_recv_multicast, &pkg->payload[2]); //风险操作：pkg生命周期？
+        }
+        // 私聊消息
+        else
+        {
+            g_idle_add(cb_recv_unicast, &pkg->payload[2]); //风险操作：pkg生命周期？
         }
 
         printf("recv %s from server\n", pkg->payload);
@@ -577,29 +599,32 @@ Side effect :
 Author      : zhq
 Date        : 2018.9.4
 ********************************************************************************/
-char **Divide_String(char *msg, char** Divided_Strings) {
-	int flag = 1, i_msg, i_Div, cnt = 0, strings_num = 0;               //cnt 代表要删除的个数;
-	for (i_msg = 0, i_Div = 0; i_msg < strlen(msg); i_msg++, i_Div++) {
-		if (msg[i_msg] == '\\' && flag == 1)
-		{
-			i_msg++;
-			Divided_Strings[strings_num][i_Div] = msg[i_msg];
-			//          flag=-flag;
-		}            // 转义前字符,并且完成当前转义
-//      else if(msg[i_msg]=='\\'&&flag==-1){
-//          Divided_Strings[strings_num][i_Div]=msg[i_msg];
-//          flag=-flag;
-//      }            // 
-		else if (msg[i_msg] == ','&&flag == 1)
-		{
-			Divided_Strings[strings_num][i_Div] = '\0';
-			strings_num++;
-			i_Div = -1;
-		}            // 下一字符串
-		else {
-			Divided_Strings[strings_num][i_Div] = msg[i_msg];
-		}            // 简单拷贝  
-	}
-	Divided_Strings[strings_num][i_Div] = '\0';
-	return Divided_Strings;
+char **Divide_String(char *msg, char **Divided_Strings)
+{
+    int flag = 1, i_msg, i_Div, cnt = 0, strings_num = 0; //cnt 代表要删除的个数;
+    for (i_msg = 0, i_Div = 0; i_msg < strlen(msg); i_msg++, i_Div++)
+    {
+        if (msg[i_msg] == '\\' && flag == 1)
+        {
+            i_msg++;
+            Divided_Strings[strings_num][i_Div] = msg[i_msg];
+            //          flag=-flag;
+        } // 转义前字符,并且完成当前转义
+          //      else if(msg[i_msg]=='\\'&&flag==-1){
+          //          Divided_Strings[strings_num][i_Div]=msg[i_msg];
+          //          flag=-flag;
+          //      }            //
+        else if (msg[i_msg] == ',' && flag == 1)
+        {
+            Divided_Strings[strings_num][i_Div] = '\0';
+            strings_num++;
+            i_Div = -1;
+        } // 下一字符串
+        else
+        {
+            Divided_Strings[strings_num][i_Div] = msg[i_msg];
+        } // 简单拷贝
+    }
+    Divided_Strings[strings_num][i_Div] = '\0';
+    return Divided_Strings;
 }
