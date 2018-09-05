@@ -5,7 +5,6 @@
 	> Created Time: Wed 05 Sep 2018 10:45:59 AM CST
  ************************************************************************/
 #include "GUI.h"
-#include <gtk/gtk.h>
 
 void toggle_statusbar(GtkWidget *widget,gpointer statusbar)
 {
@@ -84,10 +83,4 @@ void  load_setting_windows()
     gtk_widget_show_all(window);
 
 
-}
-int main(int argv,char *argc[])
-{
-    gtk_init(&argv,&argc);
-    load_setting_windows();
-    gtk_main();
 }

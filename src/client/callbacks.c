@@ -13,9 +13,18 @@ void msgbox(const char* msg)
 	gtk_widget_show_all(pop);
 }
 
-gboolean cb_contacts(gpointer data, int count)
+gboolean cb_contacts(gpointer data)
 {
+	int *p = (int*)data, group_cnt = *p;
+	friendlist = (Entity*)(++p);
+	load_friend_info();
+}
 
+gboolean cb_groups(gpointer data)
+{
+	int *p = (int*)data, cnt = *p;
+	grouplist = (Entity*)(++p);
+	load_group_info();
 }
 
 gboolean cb_auth(gpointer data)
@@ -23,21 +32,10 @@ gboolean cb_auth(gpointer data)
 	if(data) {
 		//success
 		gtk_widget_destroy(login_window);
-		// myself = (Entity*) data;
-		// load_main_window(e->nickname,e->avatar_id,a,1,b,0);
-		// req_contacts();		
-		// req_groups();
-		// ****** test code
-		Entity *e = (Entity*) malloc(sizeof(Entity));
-		memcpy(e->nickname, "heiheihei\0", sizeof(e->nickname));
-		e->avatar_id = 0;
-	    Entity *a = (Entity*) malloc(sizeof(Entity)), *b = (Entity*) malloc(sizeof(Entity));
-	    a[0].avatar_id = 0;
-	    memcpy(a[0].nickname, "test", sizeof(a[0].nickname));
-	    b[0].avatar_id = 0;
-	    memcpy(b[0].nickname, "test", sizeof(b[0].nickname));
-	    load_main_window(e->nickname,e->avatar_id,a,1,b,1);
-	    //* ****** test code end 
+		myself = (Entity*) data;
+		load_main_window();
+		req_contacts(cb_contacts);		
+		// req_groups(cb_groups);
 	}else{
 		//error
 		msgbox("验证失败，请检查用户名和密码!");
@@ -67,11 +65,14 @@ void on_click_signup(gpointer button, gpointer* entries)
 {
 	gchar* pwd = gtk_entry_get_text(entries[1]), *pwd2 = gtk_entry_get_text(entries[2]);
 	if(strcmp(pwd, pwd2) != 0){
-		printf("error!\n");		
 		msgbox("两次输入不一致!");
 		return;
 	}
 	gchar* username = gtk_entry_get_text(entries[0]);
+	if(strlen(username) >= 30){
+		msgbox("Username is too long!\n");
+		return;
+	}
 	req_register(username, pwd, cb_reg);
 }
 

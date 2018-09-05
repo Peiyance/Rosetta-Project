@@ -35,12 +35,12 @@ void load_information(GtkWidget* expander, GtkWidget* listbox, Entity* list, int
      gtk_widget_show_all(expander);
 }
 
-void load_friend_info(Entity* list, int cnt){
-    load_information(friends_expander, friends_listbox, list, cnt, 1);
+void load_friend_info(){
+    load_information(friends_expander, friends_listbox, friendlist, friend_cnt, 1);
 }
 
-void load_group_info(Entity* list, int cnt){
-    load_information(groups_expander, groups_listbox, list, cnt, 0);
+void load_group_info(){
+    load_information(groups_expander, groups_listbox, grouplist, group_cnt, 0);
 }
 
 void load_main_window()
@@ -92,6 +92,7 @@ void load_main_window()
         gtk_box_pack_start(GTK_BOX(main_box),main_scrolledwindow,TRUE,TRUE,0);
         GtkWidget *toolbar = gtk_toolbar_new();
             GtkWidget* settings = gtk_tool_button_new_from_stock(GTK_STOCK_PROPERTIES);
+            g_signal_connect(G_OBJECT(settings), "clicked", G_CALLBACK(load_setting_windows), NULL);
             gtk_toolbar_insert(GTK_TOOLBAR(toolbar),settings,0);
         gtk_box_pack_start(GTK_BOX(main_box),toolbar,FALSE,FALSE,0);
     gtk_container_add(GTK_CONTAINER(main_window),main_box );

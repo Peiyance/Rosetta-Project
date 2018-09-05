@@ -15,10 +15,14 @@ void load_login_window();
 void load_signup_window();
 
 //list_ui.c
-Entity* myself;
+Entity *myself, *friendlist, *grouplist;
+int friend_cnt, group_cnt;
 void load_main_window();
-void load_group_info(Entity* list, int cnt);
-void load_friend_info(Entity* list, int cnt);
+void load_group_info();
+void load_friend_info();
+
+//settings.c
+void load_setting_windows();
 
 //callbacks.c
 void on_click_signup_return(gpointer button, gpointer window);
