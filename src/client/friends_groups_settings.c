@@ -15,14 +15,15 @@ void load_add_new_friend_window(int stauts)
     GtkWidget *search_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_default_size (GTK_WINDOW(search_window),400,600);
     gtk_window_set_position(GTK_WINDOW(search_window),GTK_WIN_POS_CENTER);
-    gtk_window_set_title(GTK_WINDOW(search_window),"Rosetta");
+    gtk_window_set_title(GTK_WINDOW(search_window),"search new friends");
     gtk_window_set_opacity(GTK_WINDOW(search_window), 0.95);       // 设置透明度函数
     //设置背景图片
     change_background(search_window, 400, 600, "./imgs/bg/01.png");
     //==========================主分割main_box===========================================
     GtkWidget *main_box = gtk_vbox_new(FALSE,0);
     gtk_container_add(GTK_CONTAINER(search_window),main_box);
-            GtkWidget *main_entry = gtk_entry_new(); 
+            GtkWidget *main_entry = gtk_entry_new();  
+            
             gtk_box_pack_start(GTK_BOX(main_box),main_entry,FALSE,FALSE,10);
             gtk_container_set_border_width(GTK_CONTAINER(main_box),40);
         //=========================好友们
@@ -33,7 +34,6 @@ void load_add_new_friend_window(int stauts)
                 GtkWidget *show_box = gtk_vbox_new(FALSE,0);
                         gtk_box_pack_start(GTK_BOX(show_box),main_viewport,FALSE,FALSE,0);
                 //==========================显示好友
-                   // load_information(main_viewport,show_box, );   
                 gtk_container_add(GTK_CONTAINER(main_viewport),show_box);
         //=============================
         gtk_box_pack_start(GTK_BOX(main_box),search_scrolledwindow,TRUE,TRUE,0);
