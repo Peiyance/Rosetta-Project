@@ -127,18 +127,23 @@ void test_cb(gpointer x, GtkTextView* test)
 
 //search users
 
-gboolean cb_add_friend(gpointer res){
+gboolean cb_list_operation(gpointer res){
 	if(res){
-		msgbox("Add friend success!");
+		msgbox("Operation Success!");
 		req_contacts(cb_contacts);
+		req_groups(cb_groups);
 	}else{
-		msgbox("Add friend failed!");
+		msgbox("Operation Failed!");
 	}
 	return FALSE;
 }
 
 void on_click_add_friend(GtkWidget* widget, GdkEvent* event, Entity* who){
-	req_add_contacts(myself->nickname, who->nickname, cb_add_friend);
+	req_add_contacts(myself->nickname, who->nickname, cb_list_operation);
+}
+
+void on_click_del_friend(GtkWidget* widget, GdkEvent* event, Entity* who){
+	req_delete_contacts(myself->nickname, who->nickname, cb_list_operation);
 }
 
 gboolean cb_search_contacts(gpointer data)
@@ -153,4 +158,18 @@ void search_user(GtkWidget* entry)
 {
 	char* pattern = gtk_entry_get_text(entry);
 	req_search_contacts(pattern, cb_search_contacts);
+}
+
+void delete_user(GtkWidget* entry)
+{
+    char* pattern = gtk_entry_get_text(entry);
+    Entity* list = (Entity*)malloc(sizeof(Entity)*friend_cnt);
+    int cnt = 0;
+    for(int i = 0; i < friend_cnt; i++){
+        if(strstr(friendlist[i].nickname, pattern)){
+            list[cnt++] = friendlist[i];
+        }
+    }
+    load_information(result_main_viewport, &result_show_box, list, cnt, on_click_del_friend);
+    free(list);
 }
