@@ -29,10 +29,13 @@ gboolean cb_reg(gpointer data)
 {
 	if(data){
 		//success
-		msgbox("SUCESS!");
+		msgbox("注册成功，请登陆");
+		gtk_widget_destroy(signup_window);
+
 	}else{
-		msgbox("FAILED!");
+		msgbox("REGIESTER FAILED!");
 	}
+	return FALSE;
 }
 
 void on_click_signup_return(gpointer button, gpointer window)

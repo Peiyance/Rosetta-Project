@@ -39,7 +39,7 @@ void change_background(GtkWidget *widget, int w, int h, const gchar *path)
 //===============================加载登陆页面===========================
 void load_login_window()
 {    
-    GtkWidget *login_window;
+    // GtkWidget *login_window;
     GtkWidget *main_table;
     GtkWidget *input_box;
     //GtkWidget *login_img_logo;
@@ -125,7 +125,7 @@ void load_login_window()
 //=============================加载注册页面==========================
 void load_signup_window()
 {
-    GtkWidget *signup_window;
+    // GtkWidget *signup_window;
     GtkWidget *main_table;
     GtkWidget *signup_img_logo;
     GtkWidget *signup_entry_name;

@@ -1,12 +1,15 @@
 #ifndef _GUI_H
-#define _GUI_h
+#define _GUI_H
 
 #include <gtk/gtk.h>
 #include <stdio.h>
 #include <string.h>
-#include "sungtk_interface.h" 
+#include "common.h"
+#include "sungtk_interface.h"
 
 //login_signup.c
+GtkWidget *login_window;
+GtkWidget *signup_window;
 void load_login_window();
 void load_signup_window();
 
