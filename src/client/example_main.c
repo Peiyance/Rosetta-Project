@@ -5,8 +5,8 @@
 #include "common.h"
 
 
-char remoteIP[] = "10.211.55.2";
-short remotePort = 8888;
+char remoteIP[] = "172.20.10.9";
+short remotePort = 8000;
 int count = 0;
 GtkWidget *window;
 
@@ -18,7 +18,7 @@ void on_button_clicked(GtkWidget *button, gpointer userdata)
     char username[] = "username,x\\xx\\,\\";
     char password[] = "pswwwwwfse";
 
-    File_private("address/var/log.txt","myName");
+    File_private("/var/tmp/a.txt","myName");
 }
 
 gboolean on_finish(gpointer data)

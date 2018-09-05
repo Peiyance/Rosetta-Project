@@ -65,7 +65,7 @@ int init_connector(char remoteIP[], short remotePort)
 
     sin_listen.sin_family = AF_INET;            //ipv4
     sin_listen.sin_port = htons(8371);          //port
-    inet_aton("0.0.0.0", &sin_listen.sin_addr); //addr
+    sin_listen.sin_addr.s_addr = htonl(INADDR_ANY);
 
     int opt = 1;
     setsockopt(sock_listen, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
@@ -411,11 +411,13 @@ static void *thread_send_file(void *ip)
     bzero(&server, sizeof(server));
     server.sin_family = AF_INET;
     server.sin_port = htons(8371);
+    //strcpy(buf,ip);
     inet_aton((char *)ip, &server.sin_addr);
     setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     if (connect(sd, (struct sockaddr *)&server, sizeof(server)) < 0)
     {
+        printf("!!!!");
         perror("Connect");
         close(sd);
         exit(1);
@@ -492,6 +494,8 @@ static void *pthread(void *arg)
 
     char msg[1024];
     static Entity self;         //自己的信息
+
+    int cnt_contacts = 0;
     static Entity contacts[20]; //联系人信息
 
     for (;;)
@@ -581,7 +585,8 @@ static void *pthread(void *arg)
         // /2 contacts, /5 search , /3 add, /6 delete
         else if (pkg->payload[0] == '/' && (pkg->payload[1] == '2' || pkg->payload[1] == '3' || pkg->payload[1] == '5' || pkg->payload[1] == '6'))
         {
-            for (int i = 0; i < (pkg->len / sizeofEntity); i++)
+            cnt_contacts = pkg->len / sizeofEntity;
+            for (int i = 0; i < cnt_contacts; i++)
             {
                 memcpy(&contacts[i], &pkg->payload[2 + i * sizeofEntity], sizeofEntity);
             }

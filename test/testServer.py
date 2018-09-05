@@ -3,7 +3,8 @@
 import asyncio
 
 LISTEN_IP = '10.211.55.2'
-LISTEN_PORT = 8888
+LISTEN_IP = '172.20.10.9'
+LISTEN_PORT = 8000
 
 
 async def handle_echo(reader, writer):
@@ -27,7 +28,7 @@ async def handle_echo(reader, writer):
             writer.write(data)
             await writer.drain()
         elif data[12] == ord('#'):
-            data = b'\x02\x00\x00\x00\x01\x00\x00\x00' +b'\x0b\x00\x00\x00'+b'##127.0.0.1'
+            data = b'\x02\x00\x00\x00\x01\x00\x00\x00' +b'\x0f\x00\x00\x00'+b'##172.20.10.13\x00'
             writer.write(data)
             await writer.drain()
         else:
