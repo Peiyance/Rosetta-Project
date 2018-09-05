@@ -22,8 +22,12 @@ async def handle_echo(reader, writer):
         print("Received %r from %r" % (message, addr))
 
         print(data[13])
-        if data[13] == ord('0'):
+        if data[13] == ord('0'): 
             data = b'\x02\x00\x00\x00\x01\x00\x00\x00' +b'\x28\x00\x00\x00'+b'/0\x10\x00\x00\x00\x20\x00\x00\x00\x01\x02\x03\x04\x05\x01\x02\x03\x04\x05\x01\x02\x03\x04\x05\x01\x02\x03\x04\x05\x01\x02\x03\x04\x05\x01\x02\x03\x04\x05'
+            writer.write(data)
+            await writer.drain()
+        elif data[12] == ord('#'):
+            data = b'\x02\x00\x00\x00\x01\x00\x00\x00' +b'\x0b\x00\x00\x00'+b'##127.0.0.1'
             writer.write(data)
             await writer.drain()
         else:

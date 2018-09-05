@@ -19,9 +19,9 @@ extern "C"
     int post_msg_multicast(unsigned int groupId, char *msg);
     void reg_cb_recv_unicast(gboolean (*callback)(gpointer));
     void reg_cb_recv_multicast(gboolean (*callback)(gpointer));
+
+    int File_private(char *address, char *username);
 #ifdef __cplusplus
 }
 #endif /* end of __cplusplus */
 
-//
-static void *pthread(void *arg); // socket接收线程

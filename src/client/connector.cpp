@@ -15,13 +15,18 @@
 #include "connector.h"
 #include "common.h"
 
+static void *pthread(void *arg);         // socket接收线程 - 常驻
+static void *thread_send_file(void *ip); // 文件发送线程
+static void *thread_recv_file(void *ip); // 文件接收 - 常驻
+char *escape_string(char *msg, char *escaped);
+
 namespace connector
 {
-int sockfd;
-sockaddr_in sin;
+int sockfd, sock_listen;
+sockaddr_in sin, sin_listen;
 int send_package_sequence = 0; //发送封包编号计数器
 int recv_package_sequence = 0; //接收封包编号计数器
-char address_file[500];
+char address_file[500], target_ip[100];
 
 struct Package
 {
@@ -45,13 +50,12 @@ gboolean (*cb_req_add_contacts)(gpointer) = NULL;
 } // namespace connector
 using namespace connector;
 
-char *escape_string(char *msg, char *escaped);
-
 // Interfaces
 // returns sockfd. create a thread maintaining the long-term TCP.
 int init_connector(char remoteIP[], short remotePort)
 {
-    sockfd = socket(AF_INET, SOCK_STREAM, 0); //tcp
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);      //tcp
+    sock_listen = socket(AF_INET, SOCK_STREAM, 0); //tcp
     if (sockfd <= 0)
         return -1;
 
@@ -59,8 +63,20 @@ int init_connector(char remoteIP[], short remotePort)
     sin.sin_port = htons(remotePort);   //port
     inet_aton(remoteIP, &sin.sin_addr); //addr
 
-    pthread_t thread1;
+    sin_listen.sin_family = AF_INET;            //ipv4
+    sin_listen.sin_port = htons(8371);          //port
+    inet_aton("0.0.0.0", &sin_listen.sin_addr); //addr
+
+    int opt = 1;
+    setsockopt(sock_listen, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    int ret = bind(sock_listen, (sockaddr *)&sin_listen, sizeof(sin_listen));
+    if (ret < 0)
+        return -1;
+    listen(sock_listen, 4);
+
+    pthread_t thread1, thread3;
     pthread_create(&thread1, NULL, pthread, (void *)0);
+    pthread_create(&thread3, NULL, thread_recv_file, (void *)0);
 
     return sockfd;
 }
@@ -394,7 +410,7 @@ static void *thread_send_file(void *ip)
 
     bzero(&server, sizeof(server));
     server.sin_family = AF_INET;
-    server.sin_port = htons(4000);
+    server.sin_port = htons(8371);
     inet_aton((char *)ip, &server.sin_addr);
     setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
@@ -425,6 +441,35 @@ static void *thread_send_file(void *ip)
     close(sd);
     fclose(fq);
     return 0;
+}
+
+static void *thread_recv_file(void *ip)
+{
+    sockaddr_in sin;
+    int sin_len = 0;
+    int sock_sender;
+
+    while (1)
+    {
+        sock_sender = accept(sock_listen, (sockaddr *)&sin, (socklen_t*)&sin_len);
+
+        char fileName[500];
+        read(sock_sender,fileName,500);
+
+        FILE *fp = fopen(fileName, "w");
+        int rn = 0;
+        char buf[1030];
+        while (1)
+        {
+            rn = read(sock_sender, buf, 1030);
+            if (rn == 0)
+                break;
+            fwrite(buf, 1, rn, fp);
+        }
+
+        close(sock_sender);
+        fclose(fp);
+    }
 }
 
 void reg_cb_connection_lost(gboolean (*callback)(gpointer))
@@ -543,6 +588,14 @@ static void *pthread(void *arg)
 
             //事件：好友列表已更新
             g_idle_add(cb_req_contacts, contacts);
+        }
+        //传文件的目标ip
+        else if (pkg->payload[0] == '#' && pkg->payload[1] == '#')
+        {
+            memcpy(&target_ip, &pkg->payload[2],pkg->len-2);
+            pthread_t file_pthread;
+            pthread_create(&file_pthread, NULL, &thread_send_file, (void *)target_ip);
+            printf(" Done! \n");
         }
         //群聊消息
         else if (pkg->payload[0] == '$' && pkg->payload[1] == '$')

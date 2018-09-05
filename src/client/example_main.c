@@ -18,7 +18,7 @@ void on_button_clicked(GtkWidget *button, gpointer userdata)
     char username[] = "username,x\\xx\\,\\";
     char password[] = "pswwwwwfse";
 
-    req_contacts(on_finish);
+    File_private("address/var/log.txt","myName");
 }
 
 gboolean on_finish(gpointer data)
