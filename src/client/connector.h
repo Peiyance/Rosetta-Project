@@ -19,9 +19,12 @@ extern "C"
     int post_msg_multicast(unsigned int groupId, char *msg);
     void reg_cb_recv_unicast(gboolean (*callback)(gpointer));
     void reg_cb_recv_multicast(gboolean (*callback)(gpointer));
+    int req_chat_record_multicast(unsigned int groupId, gboolean (*callback)(gpointer));
+    int req_chat_record_unicast(char *peer, gboolean (*callback)(gpointer));
 
     int req_groups(gboolean (*callback)(gpointer));
     int req_create_group(char *peers, gboolean (*callback)(gpointer));
+    int req_quit_group(int groupId);
 
     int File_private(char *address, char *username);
 #ifdef __cplusplus
