@@ -59,8 +59,7 @@ struct WithCount
 
 // Interfaces
 // returns sockfd. create a thread maintaining the long-term TCP.
-int
-init_connector(char remoteIP[], short remotePort)
+int init_connector(char remoteIP[], short remotePort)
 {
     sockfd = socket(AF_INET, SOCK_STREAM, 0);      //tcp
     sock_listen = socket(AF_INET, SOCK_STREAM, 0); //tcp
@@ -335,6 +334,22 @@ int req_add_contacts(char *username, char *contact_name, gboolean (*callback)(gp
     pkg->len = strlen("/3") + strlen(escaped_username) + strlen(escaped_contact_name);
 
     //发送
+    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    return 0;
+}
+
+int req_groups(gboolean (*callback)(gpointer))
+{
+    cb_req_contacts = callback; // reg callback
+
+    // 构造数据包
+    Package *pkg = (Package *)new char[sizeof(Package) + 4];
+    pkg->package_sequence = send_package_sequence++;
+    pkg->ver = 0x1;
+
+    memcpy(pkg->payload, "/2", strlen("/2"));
+    pkg->len = 2;
+
     write(sockfd, pkg, sizeof(Package) + pkg->len);
     return 0;
 }

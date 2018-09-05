@@ -20,8 +20,10 @@ extern "C"
     void reg_cb_recv_unicast(gboolean (*callback)(gpointer));
     void reg_cb_recv_multicast(gboolean (*callback)(gpointer));
 
+    int req_groups(gboolean (*callback)(gpointer));
+    int req_create_group(char *peers, gboolean (*callback)(gpointer));
+
     int File_private(char *address, char *username);
 #ifdef __cplusplus
 }
 #endif /* end of __cplusplus */
-

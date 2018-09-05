@@ -3,8 +3,8 @@
 
 int main(int argv, char *argc[])
 {
-    char remoteIP[] = "192.168.160.130";
-    short remotePort = 8888;
+    char remoteIP[] = "192.168.0.100";
+    short remotePort = 8000;
     init_connector(remoteIP, remotePort);
 
     gtk_init(&argv, &argc);
