@@ -25,6 +25,7 @@ void load_friend_info();
 void load_setting_windows();
 
 //callbacks.c
+void msgbox(const char* msg);
 void on_click_signup_return(gpointer button, gpointer window);
 void on_click_signup(gpointer button, gpointer* entries);	
 void on_click_login(gpointer button, gpointer* entries);
