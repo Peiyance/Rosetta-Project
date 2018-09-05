@@ -15,6 +15,7 @@ void load_login_window();
 void load_signup_window();
 
 //list_ui.c
+Entity* myself;
 GtkWidget *main_window;
 void load_main_window(char *username, int avator_id, Entity *friends_list, int friend_num, Entity *groups_list, int group_num);
 
