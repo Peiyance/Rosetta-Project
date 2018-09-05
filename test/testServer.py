@@ -11,20 +11,21 @@ async def handle_echo(reader, writer):
     # try:
     while(True):
         data = await reader.read(100)
-        writer.write(data)
-        message = data.decode()
-
+        addr = writer.get_extra_info('peername')
+        
+        
+        message = data
         if message == '':
             print("Close the client socket")
             writer.close()
-            break
-
-        addr = writer.get_extra_info('peername')
+            break        
         print("Received %r from %r" % (message, addr))
-
-        #print("Send: %r" % message)
         
+        data = b'\x1d\x00\x00\x00\x01\x00\xe6\xac\x0e\x00\x00\x00/01\admin,\\3455'
+        writer.write(data)
         await writer.drain()
+        
+        
     # except Exception as e:
     #    throw(e)
 

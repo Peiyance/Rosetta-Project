@@ -8,8 +8,9 @@ void msgbox(const char* msg)
 	gtk_container_add(GTK_CONTAINER(pop), label);
 	gtk_window_set_position(GTK_WINDOW(pop), GTK_WIN_POS_CENTER);
 	gtk_window_set_default_size(GTK_WINDOW(pop), 300, 200);
-	gtk_widget_show_all(pop);
+	
 	g_signal_connect(G_OBJECT(pop), "delete_event", G_CALLBACK(gtk_widget_destroy), (gpointer)pop);
+	gtk_widget_show_all(pop);
 }
 
 gboolean cb_auth(gpointer data)
@@ -21,6 +22,7 @@ gboolean cb_auth(gpointer data)
 		//error
 		msgbox("验证失败，请检查用户名和密码!");
 	}
+	return FALSE;
 }
 
 gboolean cb_reg(gpointer data)
