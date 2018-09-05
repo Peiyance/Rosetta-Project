@@ -22,16 +22,17 @@ void search_friends(GtkWidget* entry)
     for(int i = 0; i < friend_cnt; i++){
         if(strstr(friendlist[i].nickname, pattern)){
             list[cnt++] = friendlist[i];
-            sprintf(list[cnt-1].nickname, "%s(Friend)", friendlist[i].nickname);
+            sprintf(list[cnt-1].nickname, "%s (Friend)", friendlist[i].nickname);
         }
     }
     for(int i = 0; i < group_cnt; i++){
         if(strstr(grouplist[i].nickname, pattern)){
             list[cnt++] = grouplist[i];
-            sprintf(list[cnt-1].nickname, "%s(Group)", grouplist[i].nickname);
+            sprintf(list[cnt-1].nickname, "%s (Group)", grouplist[i].nickname);
         }
     }
     load_information(results_expander, &results_listbox, list, cnt, on_click_friend);
+    free(list);
     refresh_label(results_expander, "Search Results ", cnt);
 }
 

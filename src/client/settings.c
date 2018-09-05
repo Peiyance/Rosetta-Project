@@ -31,7 +31,7 @@ void  load_setting_windows()
          g_signal_connect(G_OBJECT(add_new_friend),"activate",G_CALLBACK(load_add_new_friend_window), search_user);
     GtkWidget *delete_friend = gtk_menu_item_new_with_label("删除好友");
         gtk_menu_shell_append(GTK_MENU_SHELL(menu_friend_groups_settings),delete_friend);
-         // g_signal_connect(G_OBJECT(delete_friend),"activate",G_CALLBACK(load_add_new_friend_window), search_friend);
+         // g_signal_connect(G_OBJECT(delete_friend),"activate",G_CALLBACK(load_add_new_friend_window), delete_user);
     GtkWidget *add_new_group = gtk_menu_item_new_with_label("添加群");
         gtk_menu_shell_append(GTK_MENU_SHELL(menu_friend_groups_settings),add_new_group);
     //g_signal_connect(G_OBJECT(add_new_group),"activate",G_CALLBACK(load_add_new_friend_window), 2);

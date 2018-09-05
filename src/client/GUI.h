@@ -38,6 +38,7 @@ void on_click_group(GtkWidget* widget, GdkEvent* event, Entity* who);
 void test_cb(gpointer x, GtkTextView* test);
 void search_user(GtkWidget* entry);
 void search_friends(GtkWidget* entry);
+void delete_user(GtkWidget* entry);
 
 //friends_groups_settings.c
 GtkWidget* result_main_viewport, *result_show_box;
