@@ -16,8 +16,9 @@ void load_signup_window();
 
 //list_ui.c
 Entity* myself;
-GtkWidget *main_window;
 void load_main_window(char *username, int avator_id, Entity *friends_list, int friend_num, Entity *groups_list, int group_num);
+void load_group_info(Entity* list, int cnt);
+void load_friend_info(Entity* list, int cnt);
 
 //callbacks.c
 void on_click_signup_return(gpointer button, gpointer window);
