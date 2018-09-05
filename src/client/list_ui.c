@@ -21,11 +21,13 @@ void load_main_window(char *username,int avatar_id,Entity *friends_list,int frie
             //=================user_information
             GtkWidget *main_box_user_information = gtk_hbox_new(FALSE,0);
                  //!!===========个人信息哦
-                char avatar_dir[20];
+                char avatar_dir[40];
                 sprintf(avatar_dir, "./imgs/avatars/%02d.png", avatar_id);
                 GtkWidget *main_img_avatar = gtk_image_new_from_file(avatar_dir);
                 gtk_box_pack_start(GTK_CONTAINER(main_box_user_information),main_img_avatar,FALSE,FALSE,20);
-                GtkWidget *main_label_username = gtk_label_new(username);
+                GtkWidget *main_label_username = gtk_label_new(NULL);
+                sprintf(avatar_dir, "<span foreground=\"white\">%s</span>", username);
+                gtk_label_set_markup(GTK_LABEL(main_label_username), avatar_dir);
                  gtk_box_pack_start(GTK_CONTAINER(main_box_user_information),main_label_username,FALSE,FALSE,20);
                 
             //user_information
@@ -47,14 +49,14 @@ void load_main_window(char *username,int avatar_id,Entity *friends_list,int frie
                                 GtkWidget *eventbox = gtk_event_box_new();
                                 GtkWidget *boxinfo = gtk_hbox_new(FALSE,0);
                                 gtk_container_add(GTK_CONTAINER(eventbox), boxinfo);
-                                 char avatar_dir_now[20];
-                                 sprintf(avatar_dir_now, "./imgs/avatars/%02d.png", friends_list[i].avatar_id);
+                                char avatar_dir_now[40];
+                                sprintf(avatar_dir_now, "./imgs/avatars/%02d.png", friends_list[i].avatar_id);
                                 GtkWidget *img = gtk_image_new_from_file(avatar_dir_now);
                                 gtk_box_pack_start(GTK_BOX(boxinfo),img,FALSE,FALSE,10);
                                 GtkWidget *username_lable = gtk_label_new(friends_list[i].nickname);
                                 gtk_box_pack_start(GTK_BOX(boxinfo),username_lable,FALSE,FALSE,0);
                                 gtk_box_pack_start(GTK_BOX(friends_listbox),eventbox,FALSE,FALSE,3);
-                                g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(on_click_friend), friends_list[i].id);
+                                g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(on_click_friend), &friends_list[i]);
                              }
                         gtk_box_pack_start(GTK_BOX(box_div),friends_expander,FALSE,FALSE,0);
                     GtkWidget *groups_expander = gtk_expander_new("my groups");
@@ -65,14 +67,14 @@ void load_main_window(char *username,int avatar_id,Entity *friends_list,int frie
                                 GtkWidget *eventbox = gtk_event_box_new();
                                 GtkWidget *boxinfo = gtk_hbox_new(FALSE,0);
                                 gtk_container_add(GTK_CONTAINER(eventbox), boxinfo);
-                                char avatar_dir_now[20];
+                                char avatar_dir_now[40];
                                 sprintf(avatar_dir_now, "./imgs/avatars/%02d.png", groups_list[i].avatar_id);
                                 GtkWidget *img = gtk_image_new_from_file(avatar_dir_now);
                                 gtk_box_pack_start(GTK_BOX(boxinfo),img,FALSE,FALSE,10);
                                 GtkWidget *username_lable = gtk_label_new(groups_list[i].nickname);
                                 gtk_box_pack_start(GTK_BOX(boxinfo),username_lable,FALSE,FALSE,0);
                                 gtk_box_pack_start(GTK_BOX(groups_listbox),eventbox,FALSE,FALSE,3);
-                                g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(on_click_group), groups_list[i].id);
+                                g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(on_click_group), &groups_list[i]);
                              }
                         gtk_box_pack_start(GTK_BOX(box_div),groups_expander,FALSE,FALSE,0);
                     gtk_container_add(GTK_CONTAINER(main_viewport),box_div);

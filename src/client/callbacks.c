@@ -8,8 +8,8 @@ void msgbox(const char* msg)
 	gtk_container_add(GTK_CONTAINER(pop), label);
 	gtk_window_set_position(GTK_WINDOW(pop), GTK_WIN_POS_CENTER);
 	gtk_window_set_default_size(GTK_WINDOW(pop), 300, 200);
-	
-	g_signal_connect(G_OBJECT(pop), "delete_event", G_CALLBACK(gtk_widget_destroy), (gpointer)pop);
+	g_signal_connect(G_OBJECT(pop), "activate_default", G_CALLBACK(gtk_widget_destroy), NULL);
+	g_signal_connect(G_OBJECT(pop), "delete_event", G_CALLBACK(gtk_widget_destroy), NULL);
 	gtk_widget_show_all(pop);
 }
 
@@ -21,9 +21,9 @@ gboolean cb_auth(gpointer data)
 		// Entity* e = (Entity*) data;
 		// ****** test code
 		Entity *e = (Entity*) malloc(sizeof(Entity));
-		memcpy(e->nickname, "heiheihei", sizeof(e->nickname));
+		memcpy(e->nickname, "heiheihei\0", sizeof(e->nickname));
 		e->avatar_id = 0;
-	    Entity a[1], b[1];
+	    Entity *a = (Entity*) malloc(sizeof(Entity)), *b = (Entity*) malloc(sizeof(Entity));
 	    a[0].avatar_id = 0;
 	    memcpy(a[0].nickname, "test", sizeof(a[0].nickname));
 	    b[0].avatar_id = 0;
@@ -73,12 +73,12 @@ void on_click_login(gpointer button, gpointer* entries)
 	req_authentication(username, pwd, cb_auth);
 }
 
-void on_click_friend(gpointer x, gpointer data)
+void on_click_friend(GtkWidget* widget, GdkEvent* event, Entity* who)
 {
-	msgbox("hhh");
+	msgbox(who->nickname);
 }
 
-void on_click_group(gpointer x, gpointer data)
+void on_click_group(GtkWidget* widget, GdkEvent* event, Entity* who)
 {
-	msgbox("kkk");
+	msgbox(who->nickname);
 }

@@ -22,7 +22,8 @@ void load_main_window(char *username, int avator_id, Entity *friends_list, int f
 void on_click_signup_return(gpointer button, gpointer window);
 void on_click_signup(gpointer button, gpointer* entries);	
 void on_click_login(gpointer button, gpointer* entries);
-void on_click_friend(gpointer x, gpointer data);
-void on_click_group(gpointer x, gpointer data);
+void on_click_friend(GtkWidget* widget, GdkEvent* event, Entity* who);
+void on_click_group(GtkWidget* widget, GdkEvent* event, Entity* who);
+
 
 #endif

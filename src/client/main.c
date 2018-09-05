@@ -3,7 +3,7 @@
 
 int main(int argv, char *argc[])
 {
-    char remoteIP[] = "10.211.55.2";
+    char remoteIP[] = "192.168.160.130";
     short remotePort = 8888;
     init_connector(remoteIP, remotePort);
 

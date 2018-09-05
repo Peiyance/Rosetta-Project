@@ -78,7 +78,7 @@ void load_login_window()
    // gtk_table_attach_defaults(GTK_TABLE(main_table),login_img_logo,0,18,0,4);
     //=========================输入用户名lable================================
     login_lable_name = gtk_label_new(NULL);
-    // gtk_label_set_markup(GTK_LABEL(login_lable_name),("<span foreground=\"white\">Username</span>"));
+    gtk_label_set_markup(GTK_LABEL(login_lable_name),("<span foreground=\"white\">Username</span>"));
     gtk_misc_set_alignment(GTK_MISC(login_lable_name),0,0);//设定文本在左方
     gtk_table_attach_defaults(GTK_TABLE(input_box),login_lable_name,0,1,0,1);
     //=========================输入用户名entry===============================
@@ -87,7 +87,7 @@ void load_login_window()
     gtk_table_attach_defaults(GTK_TABLE(input_box),login_entry_name,0,1,1,2);
     //=========================输入密码lable================================
     login_lable_psw = gtk_label_new(NULL);
-    // gtk_label_set_markup(GTK_LABEL(login_lable_psw),("<span foreground=\"white\">Password</span>"));
+    gtk_label_set_markup(GTK_LABEL(login_lable_psw),("<span foreground=\"white\">Password</span>"));
     gtk_misc_set_alignment(GTK_MISC(login_lable_psw), 0, 0);
     gtk_table_attach_defaults(GTK_TABLE(input_box),login_lable_psw,0,1,2,3);
     //=========================输入密码entry===============================
@@ -100,13 +100,14 @@ void load_login_window()
      // gtk_widget_modify_text (login_entry_psw, GTK_STATE_NORMAL, &text_color);
     gtk_table_attach_defaults(GTK_TABLE(input_box),login_entry_psw,0,1,3,4);
     gtk_entry_set_visibility(GTK_ENTRY(login_entry_psw), FALSE); 
+    void** entries = (void**)malloc(sizeof(void*)*2);
+    entries[0] = login_entry_name; entries[1] = login_entry_psw;
+    g_signal_connect(GTK_OBJECT(login_entry_psw), "activate", G_CALLBACK(on_click_login), entries);
     //==========================登陆button===================================
     //
     login_button_login = sungtk_button_new_with_image("./imgs/loginbutton.png", 0, 0);  
     gtk_table_attach_defaults(GTK_TABLE(main_table),login_button_login,0,18,9,10);
-    void** entries = (void**)malloc(sizeof(void*)*2);
-    entries[0] = login_entry_name; entries[1] = login_entry_psw;
-    g_signal_connect(G_OBJECT(login_button_login), "clicked", G_CALLBACK(on_click_login), (gpointer)entries);
+    g_signal_connect(G_OBJECT(login_button_login), "clicked", G_CALLBACK(on_click_login), entries);
     //===========================注册button=================================
     login_button_signup = sungtk_button_new_with_image("./imgs/login_signupbutton.png", 0, 0);  
     gtk_table_attach_defaults(GTK_TABLE(main_table),login_button_signup,0,9,5,9);
@@ -181,12 +182,13 @@ void load_signup_window()
     signup_entry_repeat_psw = gtk_entry_new();
     gtk_table_attach_defaults(GTK_TABLE(main_table),signup_entry_repeat_psw,5,18,2,3);
     gtk_entry_set_visibility(GTK_ENTRY(signup_entry_repeat_psw), FALSE);
+    void** entries = (void**)malloc(sizeof(void*)*3); entries[0] = signup_entry_name;
+    entries[1] = signup_entry_psw; entries[2] = signup_entry_repeat_psw;
+    g_signal_connect(GTK_OBJECT(signup_entry_repeat_psw), "activate", G_CALLBACK(on_click_signup), entries);
     //==============================注册button===================================
     signup_button_signup = sungtk_button_new_with_image("./imgs/signupbutton.png", 0, 0);  
     gtk_table_attach_defaults(GTK_TABLE(main_table),signup_button_signup,0,18,8,10);
-    void** entries = (void**)malloc(sizeof(void*)*3); entries[0] = signup_entry_name;
-    entries[1] = signup_entry_psw; entries[2] = signup_entry_repeat_psw;
-    g_signal_connect(G_OBJECT(signup_button_signup), "clicked", G_CALLBACK(on_click_signup), (gpointer*)entries);
+    g_signal_connect(G_OBJECT(signup_button_signup), "clicked", G_CALLBACK(on_click_signup), entries);
     //==============================返回button=================================
     
     signup_button_return = sungtk_button_new_with_image("./imgs/returnbutton.png",0 ,0);
