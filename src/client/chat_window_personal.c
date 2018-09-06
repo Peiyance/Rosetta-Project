@@ -6,9 +6,12 @@
  ********************************************************/
 #include "GUI.h"
 #include <time.h>
+#include <gdk/gdkkeysyms.h>
+
 GtkWidget *main_chat_personal_window = NULL;
 GtkWidget *input_text_buffer;
 Entity* chatting_with = NULL;
+void button_openfile (GtkWidget * widget, gpointer * data);
 //得到当前时间
 char *get_time()
 {
@@ -50,16 +53,13 @@ void load_chat_personal_window(Entity* who)
 {
     int id = get_friend_local_id(who->nickname);
     chatting_with = who;
-    // GtkWidget *main_chat_personal_window;
     GtkWidget *main_box;
     GtkWidget *friend_information_box;
     GtkWidget *friend_table;
     GtkWidget *friend_image;
     GtkWidget *friend_name_label;
     GtkWidget *friend_geqian_label;
-    //GtkWidget *nothing_label;
     GtkWidget *chat_view_box;
-    //GtkWidget *friend_hseparator;
     GtkWidget *chat_hpaned_window;
     GtkWidget *show_msg_scrolled_window;
     GtkWidget *msg_text;
@@ -70,6 +70,8 @@ void load_chat_personal_window(Entity* who)
     GtkWidget *chat_history_button;
     GtkWidget *send_msg_box;
     GtkWidget *send_msg_button;
+	GtkWidget *cutting_button;
+	GtkWidget *game_button;
     GtkWidget *input_msg_box;
     GtkWidget *input_msg_text;
     GtkWidget *input_msg_scrolled_window;
@@ -92,12 +94,9 @@ void load_chat_personal_window(Entity* who)
     input_msg_box = gtk_vbox_new(FALSE, 0);
     gtk_container_add(GTK_CONTAINER(main_chat_personal_window), main_box);
     friend_information_box = gtk_vbox_new(FALSE, 0);
-    //gtk_container_add(GTK_CONTAINER(main_box), friend_information_box);
-    gtk_box_pack_start(GTK_BOX(main_box),friend_information_box,FALSE,FALSE,0);
-    //gtk_container_add(GTK_CONTAINER(main_chat_personal_window), friend_information_box);
-
+     gtk_box_pack_start(GTK_BOX(main_box),friend_information_box,FALSE,FALSE,0);
+    
     friend_table = gtk_table_new(5,5,FALSE);
-    //gtk_container_add(GTK_CONTAINER(friend_information_box), friend_table);
     gtk_box_pack_start(GTK_BOX(friend_information_box),friend_table,FALSE,FALSE,0);
     char* imgdir[100];
     sprintf(imgdir, "./imgs/avatars/%02d.png", who->avatar_id);
@@ -118,7 +117,6 @@ void load_chat_personal_window(Entity* who)
 
     gtk_box_pack_start(GTK_BOX(chat_view_box),show_msg_scrolled_window,TRUE,TRUE,0);
     gtk_widget_show(show_msg_scrolled_window);               /*显示滚动窗口构件*/
-    // view_text_buffer = gtk_text_buffer_new(NULL);`
     msg_text = gtk_text_view_new_with_buffer(f_msgbufs[id]);                                                             /*创建文本视图构件*/
     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(show_msg_scrolled_window),msg_text);      /*将文本视图构件加入滚动窗口*/
     gtk_widget_set_size_request(show_msg_scrolled_window, 400, 300);
@@ -127,14 +125,20 @@ void load_chat_personal_window(Entity* who)
 
     //功能栏
     gtk_box_pack_start(GTK_BOX(main_box),under_tool_box,FALSE,FALSE,0);
-
+	
     smile_button = sungtk_button_new_with_image("./imgs/IMSmallToolbarFace.ico", 0, 0);
-    //获得缓冲区开始和结束位置的Iter
     gtk_box_pack_start(GTK_BOX(under_tool_box),smile_button,FALSE,FALSE,5);
+	
     file_button = sungtk_button_new_with_image("./imgs/IMBigToolbarSendFile.ico", 0, 0);
     gtk_box_pack_start(GTK_BOX(under_tool_box),file_button,FALSE,FALSE,5);
+	g_signal_connect (G_OBJECT (file_button), "clicked", G_CALLBACK (button_openfile), (gpointer) "打开");
 
-
+	cutting_button = sungtk_button_new_with_image("./imgs/IMSmallToolbarPicture.ico", 0, 0);
+    gtk_box_pack_start(GTK_BOX(under_tool_box),cutting_button,FALSE,FALSE,5);
+	
+	game_button = sungtk_button_new_with_image("./imgs/IMSmallToolbarFont.ico", 0, 0);
+    gtk_box_pack_start(GTK_BOX(under_tool_box),game_button,FALSE,FALSE,5);
+	
     chat_history_button = gtk_button_new_with_label("聊天历史");
     gtk_box_pack_end(GTK_BOX(under_tool_box),chat_history_button,FALSE,FALSE,5);
     g_signal_connect(GTK_OBJECT(chat_history_button), "clicked", G_CALLBACK(history_message_window), f_msgbufs[id]);
@@ -163,6 +167,22 @@ void load_chat_personal_window(Entity* who)
 	send_msg_button = gtk_button_new_with_label("  发  送  ");
     gtk_box_pack_end(GTK_BOX(the_last_box),send_msg_button,FALSE,FALSE,0);
     g_signal_connect(GTK_OBJECT(send_msg_button),"clicked",G_CALLBACK(send_msg_to), who);
+	
+	GtkAccelGroup *face = gtk_accel_group_new();
+    gtk_widget_add_accelerator(smile_button,"clicked",face,GDK_T,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+    gtk_window_add_accel_group(GTK_WINDOW(main_chat_personal_window),face);
+    
+	GtkAccelGroup *file = gtk_accel_group_new();
+    gtk_widget_add_accelerator(file_button,"clicked",file,GDK_Y,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+    gtk_window_add_accel_group(GTK_WINDOW(main_chat_personal_window),file);
+	
+	GtkAccelGroup *history = gtk_accel_group_new();
+    gtk_widget_add_accelerator(chat_history_button,"clicked",history,GDK_U,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+    gtk_window_add_accel_group(GTK_WINDOW(main_chat_personal_window),history);
+    
+	GtkAccelGroup *enter = gtk_accel_group_new();
+    gtk_widget_add_accelerator(send_msg_button,"clicked",enter, GDK_J, GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+    gtk_window_add_accel_group(GTK_WINDOW(main_chat_personal_window),enter);
 
     gtk_widget_show_all(main_chat_personal_window);
 
@@ -201,7 +221,7 @@ void group_send_msg_in(GtkWidget* trigger, Entity* who)
     static char input[500];
     sprintf(input,"%s\n", gtk_text_buffer_get_text(GTK_TEXT_BUFFER(input_text_buffer),&start,&end,FALSE));
     gtk_text_buffer_set_text(input_text_buffer,"",0); 
-    // post_msg_multicast(who->nickname, input);
+     post_msg_multicast(who->nickname, input);
     update_buffer(g_msgbufs[id], input, myself->nickname);
 }
 
@@ -210,7 +230,6 @@ void load_chat_group_window(Entity* who)
     close_group_window();
     chatting_in = who;
     int id = get_group_local_id(who->nickname);
-    // GtkWidget *group_main_chat_personal_window;
     GtkWidget *group_main_box;
     GtkWidget *group_friend_information_box;
     GtkWidget *group_friend_table;
@@ -229,6 +248,8 @@ void load_chat_group_window(Entity* who)
     GtkWidget *group_chat_history_button;
     GtkWidget *group_send_msg_box;
     GtkWidget *group_send_msg_button;
+	GtkWidget *group_cutting_button;
+	GtkWidget *group_game_button;
     GtkWidget *group_input_msg_box;
     GtkWidget *group_input_msg_text;
     GtkWidget *group_input_msg_scrolled_window;
@@ -275,13 +296,19 @@ void load_chat_group_window(Entity* who)
 
     //功能栏
     gtk_box_pack_start(GTK_BOX(group_main_box),group_under_tool_box,FALSE,FALSE,0);
-
     group_smile_button = sungtk_button_new_with_image("./imgs/IMSmallToolbarFace.ico", 0, 0);
-    //获得缓冲区开始和结束位置的Iter
     gtk_box_pack_start(GTK_BOX(group_under_tool_box),group_smile_button,FALSE,FALSE,5);
+	
     group_file_button = sungtk_button_new_with_image("./imgs/IMBigToolbarSendFile.ico", 0, 0);
     gtk_box_pack_start(GTK_BOX(group_under_tool_box),group_file_button,FALSE,FALSE,5);
-
+	g_signal_connect (G_OBJECT (group_file_button), "clicked", G_CALLBACK (button_openfile), (gpointer) "打开");
+	
+	group_cutting_button = sungtk_button_new_with_image("./imgs/IMSmallToolbarPicture.ico", 0, 0);
+    gtk_box_pack_start(GTK_BOX(group_under_tool_box),group_cutting_button,FALSE,FALSE,5);
+	
+	group_game_button = sungtk_button_new_with_image("./imgs/IMSmallToolbarFont.ico", 0, 0);
+    gtk_box_pack_start(GTK_BOX(group_under_tool_box),group_game_button,FALSE,FALSE,5);
+	
     group_member_button = sungtk_button_new_with_image("./imgs/IMBigToolbarGroupMember.ico", 0, 0);
     gtk_box_pack_start(GTK_BOX(group_under_tool_box),group_member_button,FALSE,FALSE,5);
 
@@ -313,7 +340,35 @@ void load_chat_group_window(Entity* who)
     group_send_msg_button = gtk_button_new_with_label("  发  送  ");
     gtk_box_pack_end(GTK_BOX(group_the_last_box),group_send_msg_button,FALSE,FALSE,0);
     g_signal_connect(GTK_OBJECT(group_send_msg_button),"clicked",G_CALLBACK(group_send_msg_in), who);
+	
+	//设置热键a
+    
+	GtkAccelGroup *face = gtk_accel_group_new();
+    gtk_widget_add_accelerator(group_smile_button,"clicked",face,GDK_Q,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+    gtk_window_add_accel_group(GTK_WINDOW(group_main_chat_personal_window),face);
+    
+	GtkAccelGroup *file = gtk_accel_group_new();
+    gtk_widget_add_accelerator(group_file_button,"clicked",file,GDK_W,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+    gtk_window_add_accel_group(GTK_WINDOW(group_main_chat_personal_window),file);
+
+    GtkAccelGroup *member = gtk_accel_group_new();
+    gtk_widget_add_accelerator(group_member_button,"clicked",member,GDK_E,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+    gtk_window_add_accel_group(GTK_WINDOW(group_main_chat_personal_window),member);
+    
+	GtkAccelGroup *history = gtk_accel_group_new();
+    gtk_widget_add_accelerator(group_chat_history_button,"clicked",history,GDK_R,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+    gtk_window_add_accel_group(GTK_WINDOW(group_main_chat_personal_window),history);
+    
+	GtkAccelGroup *enter = gtk_accel_group_new();
+    gtk_widget_add_accelerator(group_send_msg_button,"clicked",enter, GDK_S, GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+    gtk_window_add_accel_group(GTK_WINDOW(group_main_chat_personal_window),enter);
 
     gtk_widget_show_all(group_main_chat_personal_window);
 }
-
+void button_openfile (GtkWidget * widget, gpointer * data)
+{
+    GtkWidget *FileSelection;
+    FileSelection = gtk_file_selection_new ("选择文件");    /*创建文件选择构件 */
+    gtk_file_selection_set_filename (GTK_FILE_SELECTION (FileSelection),"*.jpg *.png *.bmp");
+    gtk_widget_show (FileSelection);
+}
