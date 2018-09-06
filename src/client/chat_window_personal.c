@@ -21,7 +21,6 @@ char *get_time()
 void update_buffer(GtkWidget *buffer,char *msg)
 {
     GtkTextIter start,end;
-    //获得缓冲区开始和结束位置的Iter
     gtk_text_buffer_get_bounds(GTK_TEXT_BUFFER(buffer),&start,&end);
     //插入文本到缓冲区
     char now_time[40];
@@ -34,7 +33,6 @@ void update_buffer(GtkWidget *buffer,char *msg)
 void send_msg_to(GtkWidget *button,gpointer data)
 {
     GtkTextIter start,end;
-    //获得缓冲区开始和结束位置的Iter
     gtk_text_buffer_get_bounds(GTK_TEXT_BUFFER(input_text_buffer),&start,&end);
     g_print("01\n");
     //插入文本到缓冲区:
@@ -127,9 +125,10 @@ int chat_personal_window()
     //功能栏
     gtk_box_pack_start(GTK_BOX(main_box),under_tool_box,FALSE,FALSE,0);
 
-    smile_button = sungtk_button_new_with_image("./imgs/avatars/01.png", 0, 0);
+    smile_button = sungtk_button_new_with_image("./imgs/IMSmallToolbarFace.ico", 0, 0);
+    //获得缓冲区开始和结束位置的Iter
     gtk_box_pack_start(GTK_BOX(under_tool_box),smile_button,FALSE,FALSE,5);
-    file_button = sungtk_button_new_with_image("./imgs/avatars/02.png", 0, 0);
+    file_button = sungtk_button_new_with_image("./imgs/IMBigToolbarSendFile.ico", 0, 0);
     gtk_box_pack_start(GTK_BOX(under_tool_box),file_button,FALSE,FALSE,5);
 
 
