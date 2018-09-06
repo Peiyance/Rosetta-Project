@@ -46,6 +46,8 @@ gboolean on_recv_multicast_msg(gpointer data);
 void search_user(GtkWidget* entry);
 void search_friends(GtkWidget* entry);
 void delete_user(GtkWidget* entry);
+void delete_group(GtkWidget* entry);
+void create_group(GtkWidget* trigger);
 
 //friends_groups_settings.c
 void update_buffer(GtkTextBuffer *buffer, char *msg, char *username);

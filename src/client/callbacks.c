@@ -323,12 +323,12 @@ void on_click_add_group(GtkWidget* widget, GdkEvent* event, Entity* who){
 }
 
 void on_click_del_group(GtkWidget* widget, GdkEvent* event, Entity* who){
-	// req_quit_group(who->nickname);
+	req_quit_group(myself->nickname, who->nickname);
 }
 
 /**************************************************/
-/*名称：cb_search_contacts
-/*描述：获取到用户搜索结果后的回调函数
+/*名称：cb_search_contacts/groups
+/*描述：获取到用户/Group搜索结果后的回调函数
 /*作成日期： 2018-9-5
 /*参数：
         参数1：指针, 顺次指向一个int为记录条数, 随后是struct Entity数组
@@ -341,6 +341,14 @@ gboolean cb_search_contacts(gpointer data)
 	int cnt = *(int*)data;
 	Entity* list = (Entity*)(data+4);
 	load_information(result_main_viewport, &result_show_box, list, cnt, on_click_add_friend);
+	return FALSE;
+}
+
+gboolean cb_search_groups(gpointer data)
+{
+	int cnt = *(int*)data;
+	Entity* list = (Entity*)(data+4);
+	load_information(result_main_viewport, &result_show_box, list, cnt, on_click_add_group);
 	return FALSE;
 }
 
@@ -374,13 +382,6 @@ void delete_user(GtkWidget* entry)
     free(list);
 }
 
-gboolean cb_search_groups(gpointer data)
-{
-	int cnt = *(int*)data;
-	Entity* list = (Entity*)(data+4);
-	load_information(result_main_viewport, &result_show_box, list, cnt, on_click_add_group);
-}
-
 /**************************************************/
 /*名称：search_user/delete_user
 /*描述：点击 Group 操作后的响应函数
@@ -394,7 +395,7 @@ gboolean cb_search_groups(gpointer data)
 void search_group(GtkWidget* entry)
 {
 	char* pattern = gtk_entry_get_text(entry);
-	// req_search_groups(pattern, cb_seach_groups);
+	req_search_group(pattern, cb_search_groups);
 }
 
 void delete_group(GtkWidget* entry)
@@ -409,4 +410,12 @@ void delete_group(GtkWidget* entry)
 	}
 	load_information(result_main_viewport, &result_show_box, list, cnt, on_click_del_group);
     free(list);
+}
+
+void create_group(GtkWidget* trigger)
+{
+	msgbox("Create Success!");
+	req_create_group(myself->nickname, myself->nickname);
+	sleep(0.3);
+	req_groups(myself->nickname, cb_groups);
 }

@@ -257,7 +257,7 @@ void load_chat_group_window(Entity* who)
 
     //=======================创建界面==============================
     group_main_chat_personal_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_default_size (GTK_WINDOW(group_main_chat_personal_window),400,500);
+    gtk_window_set_default_size (GTK_WINDOW(group_main_chat_personal_window),600,500);
 
     //=======================上层界面==============================
     group_main_box = gtk_vbox_new(FALSE, 0);

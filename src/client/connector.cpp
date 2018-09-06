@@ -81,14 +81,14 @@ int init_connector(char remoteIP[], short remotePort)
     sin_listen.sin_port = htons(8371);              //port
     sin_listen.sin_addr.s_addr = htonl(INADDR_ANY); // listen on 0.0.0.0
 
-    int opt = 1;
-    setsockopt(sock_listen, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    int ret = bind(sock_listen, (sockaddr *)&sin_listen, sizeof(sin_listen));
-    if (ret < 0)
-    {
-        printf("unable to bind file_listen");
-        return -1;
-    }
+    // int opt = 1;
+    // setsockopt(sock_listen, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    // int ret = bind(sock_listen, (sockaddr *)&sin_listen, sizeof(sin_listen));
+    // if (ret < 0)
+    // {
+    //     printf("unable to bind file_listen");
+    //     return -1;
+    // }
 
     listen(sock_listen, 4);
 
@@ -96,7 +96,7 @@ int init_connector(char remoteIP[], short remotePort)
     // pthread_create(&thread1, NULL, pthread, (void *)0);
     // pthread_create(&thread3, NULL, thread_recv_file, (void *)0);
     g_thread_create(pthread, 0, TRUE, NULL);
-    g_thread_create(thread_recv_file, 0, TRUE, NULL);
+    // g_thread_create(thread_recv_file, 0, TRUE, NULL);
 
     return sockfd;
 }
