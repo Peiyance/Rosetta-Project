@@ -57,4 +57,7 @@ void load_add_new_friend_window();
 //chat_personal_window.c
 void load_chat_personal_window(Entity* who);
 void reload_chat_personal_window();
+
+//Five.c
+void load_five_window(); 
 #endif
