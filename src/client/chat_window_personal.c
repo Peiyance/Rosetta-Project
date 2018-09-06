@@ -26,7 +26,7 @@ void update_buffer(GtkTextBuffer *buffer, char *msg, char *username)
 {
     //插入文本到缓冲区
     char now_time[50];
-    sprintf(now_time, "%s (%s)\n", "user", get_time());
+    sprintf(now_time, "%s (%s)\n", username, get_time());
     gtk_text_buffer_insert_at_cursor(GTK_TEXT_BUFFER(buffer), now_time, -1);
     gtk_text_buffer_insert_at_cursor(GTK_TEXT_BUFFER(buffer), msg, -1);
 }

@@ -253,9 +253,12 @@ void on_click_group(GtkWidget* widget, GdkEvent* event, Entity* who)
 gboolean on_recv_unicast_msg(gpointer data)
 {
 	char* raw = (char*) data;
-	static char username[100], msg[1024];
-	sscanf(raw, "%s:%s", username, msg);
+	char* username = raw, *msg;
+	for(int i = 0, len = strlen(raw); i < len; i++)
+		if(raw[i] == ':')	raw[i] = 0, msg = raw+i+1;
+	// sscanf(raw, "%s:%s", username, msg);
 	int uid = get_friend_local_id(username);
+	printf("username=%s\nmsg=%s\n", username, msg);
 	if(uid == -1) {
 		printf("Received strange username [%s] which is not recorded locally\n", username);
 		printf("This echo comes from [callback.c : line.260]\n");
@@ -268,7 +271,14 @@ gboolean on_recv_unicast_msg(gpointer data)
 gboolean on_recv_multicast_msg(gpointer data)
 {
 	char* raw = (char*) data;
-	static char groupname[100], username[100], msg[1024];
+	char *groupname = raw, *username, *msg;
+	int cnt = 0;
+	for(int i = 0, len = strlen(raw); i < len; i++)
+		if(raw[i] == ':'){
+			raw[i] = 0;
+			if(cnt++)	msg = raw+i+1;
+			else	username = raw+i+1;
+		}
 	sscanf(raw, "%s:%s:%d", groupname, username, msg);
 	int gid = get_group_local_id(groupname);
 	if(gid == -1){
@@ -293,11 +303,14 @@ gboolean on_recv_multicast_msg(gpointer data)
 gboolean cb_list_operation(gpointer res){
 	if(res){
 		msgbox("Operation Success!");
-		req_contacts(myself->nickname, cb_contacts);
-		req_groups(myself->nickname, cb_groups);
 	}else{
 		msgbox("Operation Failed!");
 	}
+	sleep(0.1);
+	req_contacts(myself->nickname, cb_contacts);
+	sleep(0.1);
+	req_groups(myself->nickname, cb_groups);
+
 	return FALSE;
 }
 /**************************************************/
