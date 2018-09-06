@@ -48,6 +48,7 @@ void search_friends(GtkWidget* entry);
 void delete_user(GtkWidget* entry);
 
 //friends_groups_settings.c
+void update_buffer(GtkTextBuffer *buffer, char *msg, char *username);
 GtkWidget* result_main_viewport, *result_show_box;
 void load_add_new_friend_window();
 
