@@ -11,7 +11,7 @@ void load_add_new_friend_window(GtkWidget* widget, void (*fetch)(GtkWidget*))
     GtkWidget *search_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_default_size (GTK_WINDOW(search_window),400,600);
     gtk_window_set_position(GTK_WINDOW(search_window),GTK_WIN_POS_CENTER);
-    gtk_window_set_title(GTK_WINDOW(search_window),"search new friends");
+    gtk_window_set_title(GTK_WINDOW(search_window),"SEARCH");
     gtk_window_set_opacity(GTK_WINDOW(search_window), 0.95);       // 设置透明度函数
     //设置背景图片
     change_background(search_window, 400, 600, "./imgs/bg/01.png");

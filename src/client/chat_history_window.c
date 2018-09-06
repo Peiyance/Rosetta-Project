@@ -6,9 +6,19 @@
  ********************************************************/
 #include "GUI.h"
 
-void history_message_window()
+GtkWidget *history_window = NULL;
+
+void closing_window(){
+    gtk_widget_destroy(history_window);
+    history_window = NULL;
+}
+
+void history_message_window(GtkWidget* trigger, GtkTextBuffer* buf)
 {
-	GtkWidget *history_window;
+	// GtkWidget *history_window;
+    if(history_window){
+        gtk_widget_destroy(history_window);
+    }    
 	GtkWidget *history_main_box;
 	GtkWidget *the_top_box;
 	GtkWidget *history_box;
@@ -20,6 +30,7 @@ void history_message_window()
 	//=======================创建界面==============================
 	history_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_default_size (GTK_WINDOW(history_window),300,400);
+    g_signal_connect(GTK_OBJECT(history_window), "delete_event", G_CALLBACK(closing_window), NULL);
     
 	//=======================历史消息label=========================
     history_main_box = gtk_vbox_new(FALSE, 0);
@@ -46,8 +57,7 @@ void history_message_window()
     gtk_scrolled_window_set_policy(history_scrolled, GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_container_add(GTK_CONTAINER(history_box),history_scrolled);/*将滚动窗口构件加入窗体*/
     gtk_widget_show(history_scrolled);/*显示滚动窗口构件*/
-    history_text = gtk_text_view_new();/*创建文本视图构件*/
-    g_signal_connect(GTK_OBJECT(history_window), "activate_default", G_CALLBACK(test_cb), history_text);
+    history_text = gtk_text_view_new_with_buffer(buf);/*创建文本视图构件*/
     gtk_text_view_set_editable(history_text, FALSE);
     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(history_scrolled),history_text);/*将文本视图构件加入滚动窗口*/
     gtk_widget_set_size_request(history_scrolled, 300, 372);

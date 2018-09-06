@@ -21,7 +21,9 @@ void  load_setting_windows()
     gint screen_h = gdk_screen_get_height(screen);
     
     gtk_window_move(GTK_WINDOW(window), (screen_w/2), (screen_h/2));
-    gtk_window_set_title(GTK_WINDOW(window),"friends_groups_settings statusbar");
+    gtk_window_set_title(GTK_WINDOW(window),"Settings");
+    //self-destory automatically when closing window
+    g_signal_connect(GTK_WINDOW(window), "delete_event", G_CALLBACK(gtk_widget_destroy), NULL);
     //===========主分割======
     vbox = gtk_vbox_new(FALSE,0);
     gtk_container_add(GTK_CONTAINER(window),vbox);
@@ -37,7 +39,7 @@ void  load_setting_windows()
          g_signal_connect(G_OBJECT(add_new_friend),"activate",G_CALLBACK(load_add_new_friend_window), search_user);
     GtkWidget *delete_friend = gtk_menu_item_new_with_label("删除好友");
         gtk_menu_shell_append(GTK_MENU_SHELL(menu_friend_groups_settings),delete_friend);
-         // g_signal_connect(G_OBJECT(delete_friend),"activate",G_CALLBACK(load_add_new_friend_window), delete_user);
+         g_signal_connect(G_OBJECT(delete_friend),"activate",G_CALLBACK(load_add_new_friend_window), delete_user);
     GtkWidget *add_new_group = gtk_menu_item_new_with_label("添加群");
         gtk_menu_shell_append(GTK_MENU_SHELL(menu_friend_groups_settings),add_new_group);
     //g_signal_connect(G_OBJECT(add_new_group),"activate",G_CALLBACK(load_add_new_friend_window), 2);

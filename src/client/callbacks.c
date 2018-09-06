@@ -38,17 +38,56 @@ void msgbox(const char* msg)
 	gtk_widget_show_all(pop);
 }
 
+int get_friend_local_id(const char* name){
+	for(int i = 0; i < friend_cnt; i++){
+		if(strcmp(friendlist[i].nickname, name) == 0){
+			return i;
+		}
+	}
+	return -1;
+}
+
+int get_group_local_id(const char* name){
+	for(int i = 0; i < group_cnt; i++){
+		if(strcmp(grouplist[i].nickname, name) == 0){
+			return i;
+		}
+	}
+	return -1;
+}
+
 gboolean cb_contacts(gpointer data)
 {
+	// unload
+	for(int i = 0; i < friend_cnt; i++){
+		gtk_object_destroy(f_msgbufs[i]);
+	}
+	free(f_msgbufs);
+
 	friend_cnt = *(int*)data;
 	friendlist = (Entity*)(data+4);
+	f_msgbufs = (GtkTextBuffer**) malloc(sizeof(void*)*friend_cnt);
+	for(int i = 0; i < friend_cnt; i++)
+		f_msgbufs[i] = gtk_text_buffer_new(NULL);
+	reload_chat_personal_window();
+
 	load_friend_info();
 }
 
 gboolean cb_groups(gpointer data)
 {
+	//unload
+	for(int i = 0; i < group_cnt; i++){
+		gtk_object_destroy(g_msgbufs[i]);
+	}
+	free(g_msgbufs);
+
 	group_cnt = *(int*)data;
 	grouplist = (Entity*)(data+4);
+	g_msgbufs = (GtkTextBuffer**) malloc(sizeof(void*)*group_cnt);
+	for(int i = 0; i < group_cnt; i++)
+		g_msgbufs[i] = gtk_text_buffer_new(NULL);
+
 	load_group_info();
 }
 
@@ -59,8 +98,8 @@ gboolean cb_auth(gpointer data)
 		gtk_widget_destroy(login_window);
 		myself = (Entity*) data;
 		load_main_window();
-		req_contacts(cb_contacts);		
-		// req_groups(cb_groups);
+		req_contacts(myself->nickname, cb_contacts);		
+		req_groups(myself->nickname, cb_groups);
 	}else{
 		//error
 		msgbox("验证失败，请检查用户名和密码!");
@@ -72,7 +111,7 @@ gboolean cb_reg(gpointer data)
 {
 	if(data){
 		//success
-		msgbox("注册成功，请登陆");
+		msgbox("注册成功，请登陆!");
 		gtk_widget_destroy(signup_window);
 
 	}else{
@@ -109,7 +148,7 @@ void on_click_login(gpointer button, gpointer* entries)
 
 void on_click_friend(GtkWidget* widget, GdkEvent* event, Entity* who)
 {
-	msgbox(who->nickname);
+	load_chat_personal_window(who);
 }
 
 void on_click_group(GtkWidget* widget, GdkEvent* event, Entity* who)
@@ -117,12 +156,14 @@ void on_click_group(GtkWidget* widget, GdkEvent* event, Entity* who)
 	msgbox(who->nickname);
 }
 
-void test_cb(gpointer x, GtkTextView* test)
+gboolean on_recv_unicast_msg(gpointer data)
 {
-	printf("triggered\n");
-	GtkTextBuffer *buf = gtk_text_view_get_buffer(test);
-	gtk_text_buffer_insert_at_cursor(buf, "23333\n", -1);
-	gtk_widget_show(test);
+	return FALSE;
+}
+
+gboolean on_recv_multicast_msg(gpointer data)
+{
+	return FALSE;
 }
 
 //search users
@@ -130,8 +171,8 @@ void test_cb(gpointer x, GtkTextView* test)
 gboolean cb_list_operation(gpointer res){
 	if(res){
 		msgbox("Operation Success!");
-		req_contacts(cb_contacts);
-		req_groups(cb_groups);
+		req_contacts(myself->nickname, cb_contacts);
+		req_groups(myself->nickname, cb_groups);
 	}else{
 		msgbox("Operation Failed!");
 	}
