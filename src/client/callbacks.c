@@ -165,6 +165,7 @@ gboolean cb_auth(gpointer data)
 		//success
 		gtk_widget_destroy(login_window);
 		myself = (Entity*) data;
+		sleep(0.3);
 		load_main_window();
 		req_contacts(myself->nickname, cb_contacts);		
 		req_groups(myself->nickname, cb_groups);

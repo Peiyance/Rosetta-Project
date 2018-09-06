@@ -3,8 +3,8 @@
 
 int main(int argv, char *argc[])
 {
-    char remoteIP[] = "192.168.160.131";
-    short remotePort = 8888;
+    char remoteIP[] = "192.168.0.105";
+    short remotePort = 10005;
     init_connector(remoteIP, remotePort);
     reg_cb_recv_unicast(on_recv_unicast_msg);
     reg_cb_recv_multicast(on_recv_multicast_msg);
