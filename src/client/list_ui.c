@@ -47,7 +47,9 @@ void load_group_info(){
 
 void load_main_window()
 {
-    char* username = myself->nickname;
+    char usern[513];
+    strcpy(usern,myself->nickname);
+    char* username = usern;
     int avatar_id = myself->avatar_id;
     //===========================主界面main_window=============================
     main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
