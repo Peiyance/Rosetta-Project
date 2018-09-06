@@ -106,21 +106,22 @@ Date        : 2018.9.3
 int req_authentication(char *str_username, char *str_password, gboolean (*callback)(gpointer))
 {
     cb_req_authentication = callback; // reg callback
-    // 转义
-    char escaped_username[1024], escaped_password[1024];
-    escape_string(str_username, escaped_username);
-    escape_string(str_password, escaped_password);
+    
+    char payload[1024];
+    bzero(payload,sizeof(payload));
+
+    strcat(payload,"/0*username:");
+    strcat(payload,str_username);
+    strcat(payload,";password:");
+    strcat(payload,str_password);
+    strcat(payload,";");
 
     // 构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
+    Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
     pkg->package_sequence = send_package_sequence++;
     pkg->ver = 0x1;
-
-    strcat(escaped_username, ",");
-    memcpy(pkg->payload, "/0", strlen("/0"));
-    memcpy(pkg->payload + 2, escaped_username, strlen(escaped_username));
-    memcpy(pkg->payload + 2 + strlen(escaped_username), escaped_password, strlen(escaped_password));
-    pkg->len = 2 + strlen(escaped_username) + strlen(escaped_password);
+    pkg->len = strlen(payload);
+    memcpy(pkg->payload, payload,sizeof(payload));
 
     // 发包 返回
     write(sockfd, pkg, sizeof(Package) + pkg->len);
@@ -130,38 +131,46 @@ int req_authentication(char *str_username, char *str_password, gboolean (*callba
 int req_register(char *str_username, char *str_password, gboolean (*callback)(gpointer))
 {
     cb_req_register = callback; // reg callback
-    // 转义
-    char escaped_username[1024], escaped_password[1024];
-    escape_string(str_username, escaped_username);
-    escape_string(str_password, escaped_password);
+    
+    
+    char payload[1024];
+    bzero(payload,sizeof(payload));
+
+    strcat(payload,"/1*username:");
+    strcat(payload,str_username);
+    strcat(payload,";password:");
+    strcat(payload,str_password);
+    strcat(payload,";");
 
     // 构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
+    Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
     pkg->package_sequence = send_package_sequence++;
     pkg->ver = 0x1;
-
-    strcat(escaped_username, ",");
-    memcpy(pkg->payload, "/1", strlen("/1"));
-    memcpy(pkg->payload + 2, escaped_username, strlen(escaped_username));
-    memcpy(pkg->payload + 2 + strlen(escaped_username), escaped_password, strlen(escaped_password));
-    pkg->len = 2 + strlen(escaped_username) + strlen(escaped_password);
+    pkg->len = strlen(payload);
+    memcpy(pkg->payload, payload,sizeof(payload));
 
     // 发包 返回
     write(sockfd, pkg, sizeof(Package) + pkg->len);
     return 0;
 }
 
-int req_contacts(gboolean (*callback)(gpointer))
+int req_contacts(char *username, gboolean (*callback)(gpointer))
 {
     cb_req_contacts = callback; // reg callback
 
+    char payload[1024];
+    bzero(payload,sizeof(payload));
+
+    strcat(payload,"/2:");
+    strcat(payload,username);
+    strcat(payload,"*");
+
     // 构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + 4];
+    Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
     pkg->package_sequence = send_package_sequence++;
     pkg->ver = 0x1;
-
-    memcpy(pkg->payload, "/2", strlen("/2"));
-    pkg->len = 2;
+    pkg->len = strlen(payload);
+    memcpy(pkg->payload, payload,sizeof(payload));
 
     write(sockfd, pkg, sizeof(Package) + pkg->len);
     return 0;
@@ -172,25 +181,24 @@ Description : Private_talk
 Parameter   : char *msg, char *str_peer
 Return      : int (0 == success, -1 == failed)
 Side effect :
-Author      : zhq
+Author      : zhq & zyc
 Date        : 2018.9.4
 ********************************************************************************/
 int post_msg_unicast(char *str_peer, char *msg)
 {
-    //转义
-    char escape_str_peer[1024], escape_msg[1024];
-    escape_string(str_peer, escape_str_peer);
-    escape_string(msg, escape_msg);
+	char payload[1024];
+    bzero(payload,sizeof(payload));
 
-    //构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
+    strcat(payload,str_peer);
+    strcat(payload,":");
+    strcat(payload, msg);
+
+    // 构造数据包
+    Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
     pkg->package_sequence = send_package_sequence++;
     pkg->ver = 0x1;
-    strcat(escape_str_peer, ",");
-    //   memcpy(pkg->payload, "/1", strlen("/1"));
-    memcpy(pkg->payload, escape_str_peer, strlen(escape_str_peer));
-    memcpy(pkg->payload + strlen(escape_str_peer), escape_msg, strlen(escape_msg));
-    pkg->len = strlen(escape_str_peer) + strlen(escape_msg);
+    pkg->len = strlen(payload);
+    memcpy(pkg->payload, payload,sizeof(payload));
 
     // 发包 返回
     write(sockfd, pkg, sizeof(Package) + pkg->len);
@@ -256,19 +264,20 @@ Date        : 2018.9.4
 int req_search_contacts(char *keyword, gboolean (*callback)(gpointer))
 {
     cb_req_search_contacts = callback;
-    char escaped_keyword[1024];
-    escape_string(keyword, escaped_keyword); //转义
+    
+    char payload[1024];
+    bzero(payload,sizeof(payload));
 
-    //构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
+    strcat(payload,"/5:");
+    strcat(payload,keyword);
+    strcat(payload,"*");
+
+    // 构造数据包
+    Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
     pkg->package_sequence = send_package_sequence++;
     pkg->ver = 0x1;
-
-    //strcat(escaped_username , ",");
-    memcpy(pkg->payload, "/5", strlen("/5"));
-    memcpy(pkg->payload + strlen("/5"), escaped_keyword, strlen(escaped_keyword));
-    //memcpy(pkg->payload + strlen(escaped_username) + strlen("\2"), escape_msg, strlen(escape_msg));
-    pkg->len = strlen("/5") + strlen(escaped_keyword);
+    pkg->len = strlen(payload);
+    memcpy(pkg->payload, payload,sizeof(payload));
 
     // 发送
     write(sockfd, pkg, sizeof(Package) + pkg->len);
@@ -321,37 +330,42 @@ int req_add_contacts(char *username, char *contact_name, gboolean (*callback)(gp
 {
     cb_req_add_contacts = callback;
 
-    char escaped_username[1024], escaped_contact_name[1024];
-    escape_string(username, escaped_username);
-    escape_string(contact_name, escaped_contact_name); ///转义
+    char payload[1024];
+    bzero(payload,sizeof(payload));
 
-    //构造数据包；
-    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
+    strcat(payload,"/3:");
+    strcat(payload,contact_name);
+    strcat(payload,"*");
+
+    // 构造数据包
+    Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
     pkg->package_sequence = send_package_sequence++;
     pkg->ver = 0x1;
-
-    strcat(escaped_username, ",");
-    memcpy(pkg->payload, "/3", strlen("/3"));
-    memcpy(pkg->payload + strlen("/3"), escaped_username, strlen(escaped_username));
-    memcpy(pkg->payload + strlen(escaped_username) + strlen("/3"), escaped_contact_name, strlen(escaped_contact_name));
-    pkg->len = strlen("/3") + strlen(escaped_username) + strlen(escaped_contact_name);
+    pkg->len = strlen(payload);
+    memcpy(pkg->payload, payload,sizeof(payload));
 
     //发送
     write(sockfd, pkg, sizeof(Package) + pkg->len);
     return 0;
 }
 
-int req_groups(gboolean (*callback)(gpointer))
+int req_groups(char *username, gboolean (*callback)(gpointer))
 {
     cb_req_groups = callback; // reg callback
 
+	char payload[1024];
+    bzero(payload,sizeof(payload));
+
+    strcat(payload,"/9:");
+    strcat(payload,username);
+    strcat(payload,"*");
+
     // 构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + 4];
+    Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
     pkg->package_sequence = send_package_sequence++;
     pkg->ver = 0x1;
-
-    memcpy(pkg->payload, "/9", strlen("/9"));
-    pkg->len = 2;
+    pkg->len = strlen(payload);
+    memcpy(pkg->payload, payload,sizeof(payload));
 
     write(sockfd, pkg, sizeof(Package) + pkg->len);
     return 0;

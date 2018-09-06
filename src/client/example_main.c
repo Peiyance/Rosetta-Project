@@ -17,8 +17,8 @@ void on_button_clicked(GtkWidget *button, gpointer userdata)
 {
     char username[] = "username,x\\xx\\,\\";
     char password[] = "pswwwwwfse";
-
-    File_private("/media/psf/Data/Stellardrone - Billions And Billions.mp3","myName");
+    req_authentication("u","p",on_finish);
+    //File_private("/media/psf/Data/Stellardrone - Billions And Billions.mp3","myName");
 }
 
 gboolean on_finish(gpointer data)
