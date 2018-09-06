@@ -86,6 +86,12 @@ int init_connector(char remoteIP[], short remotePort)
         return -1;
     }
 
+    // if(connect(sockfd,(sockaddr *)&sin, sizeof(sockaddr_in))<0)
+    // {
+    // 	perror("connect Error");
+    // 	return -1;
+    // }
+
     listen(sock_listen, 4);
 
     pthread_t thread1, thread3;
@@ -124,7 +130,7 @@ int req_authentication(char *str_username, char *str_password, gboolean (*callba
     memcpy(pkg->payload, payload,sizeof(payload));
 
     // 发包 返回
-    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
 
@@ -150,7 +156,7 @@ int req_register(char *str_username, char *str_password, gboolean (*callback)(gp
     memcpy(pkg->payload, payload,sizeof(payload));
 
     // 发包 返回
-    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
 
@@ -172,7 +178,7 @@ int req_contacts(char *username, gboolean (*callback)(gpointer))
     pkg->len = strlen(payload);
     memcpy(pkg->payload, payload,sizeof(payload));
 
-    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
 
@@ -201,7 +207,7 @@ int post_msg_unicast(char *str_peer, char *msg)
     memcpy(pkg->payload, payload,sizeof(payload));
 
     // 发包 返回
-    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
 
@@ -231,7 +237,7 @@ int post_msg_multicast(unsigned int GroupId, char *msg)
     pkg->len = strlen("$$") + strlen(escape_msg) + strlen(Group_Id);
 
     // 发包 返回
-    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
 
@@ -280,7 +286,7 @@ int req_search_contacts(char *keyword, gboolean (*callback)(gpointer))
     memcpy(pkg->payload, payload,sizeof(payload));
 
     // 发送
-    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
 
@@ -313,7 +319,7 @@ int req_delete_contacts(char *username, char *contact_name, gboolean (*callback)
     pkg->len = strlen("/6") + strlen(escaped_username) + strlen(escaped_contact_name);
 
     //发送
-    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
 
@@ -345,7 +351,7 @@ int req_add_contacts(char *username, char *contact_name, gboolean (*callback)(gp
     memcpy(pkg->payload, payload,sizeof(payload));
 
     //发送
-    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
 
@@ -367,7 +373,7 @@ int req_groups(char *username, gboolean (*callback)(gpointer))
     pkg->len = strlen(payload);
     memcpy(pkg->payload, payload,sizeof(payload));
 
-    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
 
@@ -384,7 +390,7 @@ int req_create_group(char *peers, gboolean (*callback)(gpointer))
     memcpy(pkg->payload + 2, peers, strlen(peers));
     pkg->len = 2 + strlen(peers);
 
-    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
 
@@ -399,7 +405,7 @@ int req_quit_group(int groupId)
     memcpy(pkg->payload + 2, &groupId, sizeof(groupId));
     pkg->len = 2 + sizeof(groupId);
 
-    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
 /********************************************************************************
@@ -425,7 +431,7 @@ int req_chat_record_multicast(unsigned int groupId, gboolean (*callback)(gpointe
     pkg->len = 2 + sizeof(groupId);
 
     //发送
-    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
 
@@ -443,7 +449,7 @@ int req_chat_record_unicast(char *peer, gboolean (*callback)(gpointer))
     pkg->len = 2 + strlen(peer);
 
     //发送
-    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
 
@@ -471,7 +477,7 @@ int File_private(char *address, char *username)
     //memcpy(pkg->payload + strlen(Group_Id) + strlen("/4"), escape_msg, strlen(escape_msg));
     pkg->len = strlen("#") + strlen(escape_username);
     //发送
-    write(sockfd, pkg, sizeof(Package) + pkg->len);
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
 
@@ -592,14 +598,16 @@ static void *pthread(void *arg)
     int first_contact = 1;
     std::cout << "接收线程，启动！" << std::endl;
 
-    char msg[1024];
+    //char msg[1024];
+    int MAX_BUF = 1024;
+    Package *pkg = (Package *)new char[sizeof(Package) + MAX_BUF];
     static Entity self; //自己的信息
 
     static WithCount contacts;
 
     for (;;)
     {
-        int len = read(sockfd, msg, sizeof(msg) - 1);
+        int len = read(sockfd, pkg->payload, MAX_BUF);
 
         //断线重连
         if (len <= 0)
@@ -653,12 +661,15 @@ static void *pthread(void *arg)
 
             continue;
         }
-        msg[len] = '\0';
+        pkg->payload[len] = '\0';
+        pkg->len = strlen(pkg->payload);
+        char msg[1024];
+        strcpy(msg,pkg->payload);
 
         int sizeofEntity = 38; // 不知为何sizeof(Entity)是40
 
         // 解包，PostMessage
-        Package *pkg = (Package *)msg;
+        //Package *pkg = (Package *)msg;
         // /0 login
         if (pkg->payload[0] == '/' && pkg->payload[1] == '0')
         {
