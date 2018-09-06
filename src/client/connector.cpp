@@ -19,6 +19,9 @@ static void *pthread(void *arg);         // socket接收线程 - 常驻
 static void *thread_send_file(void *ip); // 文件发送线程
 static void *thread_recv_file(void *ip); // 文件接收 - 常驻
 char *escape_string(char *msg, char *escaped);
+int write_socket(char *payload);
+void reconnect();
+
 
 namespace connector
 {
@@ -122,22 +125,13 @@ int req_authentication(char *str_username, char *str_password, gboolean (*callba
     strcat(payload,str_password);
     strcat(payload,";");
 
-    // 构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
-    pkg->package_sequence = send_package_sequence++;
-    pkg->ver = 0x1;
-    pkg->len = strlen(payload);
-    memcpy(pkg->payload, payload,sizeof(payload));
-
-    // 发包 返回
-    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
+    write_socket(payload);
     return 0;
 }
 
 int req_register(char *str_username, char *str_password, gboolean (*callback)(gpointer))
 {
     cb_req_register = callback; // reg callback
-    
     
     char payload[1024];
     bzero(payload,sizeof(payload));
@@ -148,15 +142,7 @@ int req_register(char *str_username, char *str_password, gboolean (*callback)(gp
     strcat(payload,str_password);
     strcat(payload,";");
 
-    // 构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
-    pkg->package_sequence = send_package_sequence++;
-    pkg->ver = 0x1;
-    pkg->len = strlen(payload);
-    memcpy(pkg->payload, payload,sizeof(payload));
-
-    // 发包 返回
-    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
+    write_socket(payload);
     return 0;
 }
 
@@ -171,14 +157,7 @@ int req_contacts(char *username, gboolean (*callback)(gpointer))
     strcat(payload,username);
     strcat(payload,"*");
 
-    // 构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
-    pkg->package_sequence = send_package_sequence++;
-    pkg->ver = 0x1;
-    pkg->len = strlen(payload);
-    memcpy(pkg->payload, payload,sizeof(payload));
-
-    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
+    write_socket(payload);
     return 0;
 }
 
@@ -199,15 +178,7 @@ int post_msg_unicast(char *str_peer, char *msg)
     strcat(payload,":");
     strcat(payload, msg);
 
-    // 构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
-    pkg->package_sequence = send_package_sequence++;
-    pkg->ver = 0x1;
-    pkg->len = strlen(payload);
-    memcpy(pkg->payload, payload,sizeof(payload));
-
-    // 发包 返回
-    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
+    write_socket(payload);
     return 0;
 }
 
@@ -216,28 +187,20 @@ Description : Public_talk
 Parameter   : char *msg, unsigned int Group_Id
 Return      : int (0 == success, -1 == failed)
 Side effect :
-Author      : zhq
+Author      : zyc
 Date        : 2018.9.4
 ********************************************************************************/
-int post_msg_multicast(unsigned int GroupId, char *msg)
+int post_msg_multicast(char *groupName, char *msg)
 {
-    //转义
-    char Group_Id[100], escape_msg[1024];
-    snprintf(Group_Id, 5, "%d", GroupId);
-    escape_string(msg, escape_msg);
+    char payload[1024];
+    bzero(payload,sizeof(payload));
 
-    // 构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
-    pkg->package_sequence = send_package_sequence++;
-    pkg->ver = 0x1;
-    strcat(Group_Id, ",");
-    memcpy(pkg->payload, "$$", strlen("$$"));
-    memcpy(pkg->payload + strlen("$$"), Group_Id, strlen(Group_Id));
-    memcpy(pkg->payload + strlen(Group_Id) + strlen("$$"), escape_msg, strlen(escape_msg));
-    pkg->len = strlen("$$") + strlen(escape_msg) + strlen(Group_Id);
+    strcat(payload,"$$");
+    strcat(payload,groupName);
+    strcat(payload,":");
+    strcat(payload, msg);
 
-    // 发包 返回
-    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
+    write_socket(payload);
     return 0;
 }
 
@@ -264,7 +227,7 @@ Description : Req_Search_Contacts
 Parameter   : char *keyword void (*callback)(char *contacts_raw)
 Return      : int (0 == success, -1 == failed)
 Side effect :
-Author      : zhq
+Author      : zhq & zyc
 Date        : 2018.9.4
 ********************************************************************************/
 int req_search_contacts(char *keyword, gboolean (*callback)(gpointer))
@@ -328,7 +291,7 @@ Description : Add_Contacts
 Parameter   : char *username  char *contact_name void (*callback)(char *contacts_raw)
 Return      : int (0 == success, -1 == failed)
 Side effect :
-Author      : zhq
+Author      : zhq & zyc
 Date        : 2018.9.4
 ********************************************************************************/
 
@@ -595,7 +558,6 @@ Date        : 2018.9.5
 ********************************************************************************/
 static void *pthread(void *arg)
 {
-    int first_contact = 1;
     std::cout << "接收线程，启动！" << std::endl;
 
     //char msg[1024];
@@ -612,57 +574,15 @@ static void *pthread(void *arg)
         //断线重连
         if (len <= 0)
         {
-            for (;;)
-            {
-                if (1)
-                {
-                    printf("[Error] Connection Lost\n");
-                    if (cb_connection_lost)
-                        g_idle_add(cb_connection_lost, (void *)10086);
-                }
-                close(sockfd);
-                sockfd = socket(AF_INET, SOCK_STREAM, 0); //tcp
-
-                ioctl(sockfd, FIONBIO, 1); //1:非阻塞 0:阻塞
-                int conn = connect(sockfd, (sockaddr *)&sin, sizeof(sin));
-
-                if (conn == 0) //connected
-                {
-                    ioctl(sockfd, FIONBIO, 0);
-                    first_contact = 0;
-                    printf("Connected.\n");
-
-                    break;
-                }
-                else
-                {
-                    fd_set fd;
-                    FD_ZERO(&fd);
-                    FD_SET(sockfd, &fd);
-                    timeval timeout; //设置超时时间
-                    timeout.tv_sec = 3;
-                    timeout.tv_usec = 0;
-                    int ret = select(1 + 1, 0, &fd, 0, &timeout);
-
-                    if (ret <= 0) //select() timeout
-                    {
-                        continue;
-                    }
-                    else //connected
-                    {
-                        ioctl(sockfd, FIONBIO, 0);
-                        first_contact = 0;
-                        printf("Connected.\n");
-
-                        break;
-                    }
-                }
-            }
-
+            reconnect();
             continue;
         }
+        //add \0 at the end
         pkg->payload[len] = '\0';
+        //calc payload len
         pkg->len = strlen(pkg->payload);
+
+        /* for debugging */
         char msg[1024];
         strcpy(msg,pkg->payload);
 
@@ -808,6 +728,73 @@ char **Divide_String(char *msg, char **Divided_Strings)
     }
     Divided_Strings[strings_num][i_Div] = '\0';
     return Divided_Strings;
+}
+
+/********************************************************************************
+Description : raw write socket
+Author      : zyc
+Date        : 2018.9.6
+********************************************************************************/
+int write_socket(char *payload)
+{
+    // 构造数据包
+    Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
+    pkg->package_sequence = send_package_sequence++;
+    pkg->ver = 0x1;
+    pkg->len = strlen(payload);
+    memcpy(pkg->payload, payload,sizeof(payload));
+
+    // 发包 返回
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
+    return 0;
+}
+
+void reconnect()
+{
+    for (;;)
+            {
+                if (1)
+                {
+                    printf("[Error] Connection Lost\n");
+                    if (cb_connection_lost)
+                        g_idle_add(cb_connection_lost, (void *)10086);
+                }
+                close(sockfd);
+                sockfd = socket(AF_INET, SOCK_STREAM, 0); //tcp
+
+                ioctl(sockfd, FIONBIO, 1); //1:非阻塞 0:阻塞
+                int conn = connect(sockfd, (sockaddr *)&sin, sizeof(sin));
+
+                if (conn == 0) //connected
+                {
+                    ioctl(sockfd, FIONBIO, 0);
+                    printf("Connected.\n");
+
+                    break;
+                }
+                else
+                {
+                    fd_set fd;
+                    FD_ZERO(&fd);
+                    FD_SET(sockfd, &fd);
+                    timeval timeout; //设置超时时间
+                    timeout.tv_sec = 3;
+                    timeout.tv_usec = 0;
+                    int ret = select(1 + 1, 0, &fd, 0, &timeout);
+
+                    if (ret <= 0) //select() timeout
+                    {
+                        continue;
+                    }
+                    else //connected
+                    {
+                        ioctl(sockfd, FIONBIO, 0);
+                        printf("Connected.\n");
+
+                        break;
+                    }
+                }
+            }
 }
 
 /********************************************************************************
