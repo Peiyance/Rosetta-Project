@@ -6,8 +6,8 @@
 	> Created Time: Mon 03 Sep 2018 07:29:03 PM CST
  ************************************************************************/
 GtkWidget *main_window, *friends_expander, *groups_expander, *friends_listbox = NULL, *groups_listbox = NULL;
-GtkWidget *results_expander = NULL, *results_listbox = NULL;
-
+GtkWidget *results_expander = NULL, *results_listbox = NULL; 
+GtkWidget *main_img_avatar;
 void refresh_label(GtkExpander* expander, const char* prefix, int cnt){
     static char tmp[40];
     sprintf(tmp, "%s (%d)", prefix, cnt);
@@ -44,7 +44,20 @@ void load_group_info(){
     load_information(groups_expander, &groups_listbox, grouplist, group_cnt, on_click_group);
     refresh_label(groups_expander, "Groups ", group_cnt);
 }
+gboolean reload_img(GtkWidget *w,GdkEvent *e,gpointer data)
+{
+    myself-> avatar_id = (myself-> avatar_id+1)%5;
+    char avatar_dir[100];
+    GtkWidget *eventb = gtk_event_box_new();
+    sprintf(avatar_dir, "./imgs/avatars/%02d.png",myself-> avatar_id);
+    gtk_widget_destroy(main_img_avatar);
+    main_img_avatar = gtk_image_new_from_file(avatar_dir);
+    gtk_container_add(GTK_CONTAINER(w),main_img_avatar);
+    gtk_widget_show(main_img_avatar);
+    printf("avtar %d\n",myself->avatar_id);
+    return TRUE;
 
+}
 void load_main_window()
 {
     char usern[513];
@@ -66,10 +79,13 @@ void load_main_window()
             GtkWidget *main_box_user_information = gtk_hbox_new(FALSE,0);
                  //!!===========个人信息哦
                 char avatar_dir[100];
+                GtkWidget *eventb = gtk_event_box_new();
                 sprintf(avatar_dir, "./imgs/avatars/%02d.png", avatar_id);
-                GtkWidget *main_img_avatar = gtk_image_new_from_file(avatar_dir);
-                gtk_box_pack_start(GTK_CONTAINER(main_box_user_information),main_img_avatar,FALSE,FALSE,20);
+                 main_img_avatar = gtk_image_new_from_file(avatar_dir);
+                gtk_container_add(GTK_CONTAINER(eventb),main_img_avatar);
+                gtk_box_pack_start(GTK_CONTAINER(main_box_user_information),eventb,FALSE,FALSE,20);
                 GtkWidget *main_label_username = gtk_label_new(NULL);
+                g_signal_connect(G_OBJECT(eventb),"button-press-event",G_CALLBACK(reload_img),0);
                 sprintf(avatar_dir, "<span foreground=\"white\">%s</span>", username);
                 gtk_label_set_markup(GTK_LABEL(main_label_username), avatar_dir);
                  gtk_box_pack_start(GTK_CONTAINER(main_box_user_information),main_label_username,FALSE,FALSE,20);
