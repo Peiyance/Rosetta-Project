@@ -5,7 +5,6 @@
 	>Last Modified	: 2018.09.06, 13:24
  ********************************************************/
 #include "GUI.h"
-#include <string.h>
 #include <time.h>
 GtkWidget *group_view_text_buffer;
 GtkWidget *group_input_text_buffer;

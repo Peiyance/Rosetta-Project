@@ -153,11 +153,12 @@ void on_click_friend(GtkWidget* widget, GdkEvent* event, Entity* who)
 
 void on_click_group(GtkWidget* widget, GdkEvent* event, Entity* who)
 {
-	msgbox(who->nickname);
+	load_chat_group_window(who);
 }
 
 gboolean on_recv_unicast_msg(gpointer data)
 {
+	// char* str = 
 	return FALSE;
 }
 
