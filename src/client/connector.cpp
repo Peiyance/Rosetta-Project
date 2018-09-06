@@ -7,13 +7,17 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <gtk/gtk.h>
-// #include <event2/event.h>
-// #include <event2/event_struct.h>
-// #include <event2/buffer.h>
-// #include <event2/bufferevent.h>
-// #include <event2/util.h>
 #include "connector.h"
 #include "common.h"
+
+typedef struct
+{
+    int count;
+    Entity content[20]; //联系人信息
+} Contacts;
+
+Entity self; //自己的信息
+Contacts contacts; // 好友、群列表
 
 static void *pthread(void *arg);         // socket接收线程 - 常驻
 static void *thread_send_file(void *ip); // 文件发送线程
@@ -39,32 +43,26 @@ struct Package
 };
 
 // 我们使用同步callback，类似于win中的PostMessage
-gboolean (*cb_req_contacts)(gpointer) = NULL;
 gboolean (*cb_req_authentication)(gpointer) = NULL;
 gboolean (*cb_req_register)(gpointer) = NULL;
-gboolean (*cb_connection_lost)(gpointer) = NULL;
-gboolean (*cb_recv_unicast)(gpointer) = NULL;
-gboolean (*cb_recv_multicast)(gpointer) = NULL;
-gboolean (*cb_req_delete_contacts)(gpointer) = NULL;
+
+gboolean (*cb_req_contacts)(gpointer) = NULL;
 gboolean (*cb_req_search_contacts)(gpointer) = NULL;
 gboolean (*cb_req_add_contacts)(gpointer) = NULL;
+gboolean (*cb_req_delete_contacts)(gpointer) = NULL;
+
 gboolean (*cb_req_groups)(gpointer) = NULL;
-gboolean (*cb_req_create_groups)(gpointer) = NULL;
-gboolean (*cb_chat_record_multicast)(gpointer) = NULL;
+gboolean (*cb_req_search_group)(gpointer) = NULL;
+
+gboolean (*cb_recv_unicast)(gpointer) = NULL;
+gboolean (*cb_recv_multicast)(gpointer) = NULL;
 gboolean (*cb_chat_record_unicast)(gpointer) = NULL;
+gboolean (*cb_chat_record_multicast)(gpointer) = NULL;
+
 } // namespace connector
 using namespace connector;
 
-typedef struct
-{
-    int count;
 
-    Entity content[20]; //联系人信息
-} Contacts;
-
-Entity self; //自己的信息
-
-Contacts contacts;
 
 // Interfaces
 // returns sockfd. create a thread maintaining the long-term TCP.
@@ -92,15 +90,9 @@ int init_connector(char remoteIP[], short remotePort)
         return -1;
     }
 
-    // if(connect(sockfd,(sockaddr *)&sin, sizeof(sockaddr_in))<0)
-    // {
-    // 	perror("connect Error");
-    // 	return -1;
-    // }
-
     listen(sock_listen, 4);
 
-    pthread_t thread1, thread3;
+    //pthread_t thread1, thread3;
     // pthread_create(&thread1, NULL, pthread, (void *)0);
     // pthread_create(&thread3, NULL, thread_recv_file, (void *)0);
     g_thread_create(pthread, 0, TRUE, NULL);
@@ -246,6 +238,29 @@ int req_search_contacts(char *keyword, gboolean (*callback)(gpointer))
     strcat(payload, keyword);
     strcat(payload, "*");
 
+    write_socket(payload);
+    return 0;
+}
+/********************************************************************************
+Description : Add_Contacts
+Parameter   : char *username  char *contact_name void (*callback)(char *contacts_raw)
+Return      : int (0 == success, -1 == failed)
+Side effect :
+Author      : zhq & zyc
+Date        : 2018.9.4
+********************************************************************************/
+
+int req_add_contacts(char *username, char *contact_name, gboolean (*callback)(gpointer))
+{
+    cb_req_add_contacts = callback;
+
+    char payload[1024];
+    bzero(payload, sizeof(payload));
+
+    strcat(payload, "/3:");
+    strcat(payload, contact_name);
+    strcat(payload, "*");
+
     // 构造数据包
     Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
     pkg->package_sequence = send_package_sequence++;
@@ -253,11 +268,10 @@ int req_search_contacts(char *keyword, gboolean (*callback)(gpointer))
     pkg->len = strlen(payload);
     memcpy(pkg->payload, payload, sizeof(payload));
 
-    // 发送
+    //发送
     write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
-
 /********************************************************************************
 Description : Delete_Contacts
 Parameter   : char *username  char *contact_name void (*callback)(char *contacts_raw)
@@ -291,37 +305,7 @@ int req_delete_contacts(char *username, char *contact_name, gboolean (*callback)
     return 0;
 }
 
-/********************************************************************************
-Description : Add_Contacts
-Parameter   : char *username  char *contact_name void (*callback)(char *contacts_raw)
-Return      : int (0 == success, -1 == failed)
-Side effect :
-Author      : zhq & zyc
-Date        : 2018.9.4
-********************************************************************************/
 
-int req_add_contacts(char *username, char *contact_name, gboolean (*callback)(gpointer))
-{
-    cb_req_add_contacts = callback;
-
-    char payload[1024];
-    bzero(payload, sizeof(payload));
-
-    strcat(payload, "/3:");
-    strcat(payload, contact_name);
-    strcat(payload, "*");
-
-    // 构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
-    pkg->package_sequence = send_package_sequence++;
-    pkg->ver = 0x1;
-    pkg->len = strlen(payload);
-    memcpy(pkg->payload, payload, sizeof(payload));
-
-    //发送
-    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
-    return 0;
-}
 
 int req_groups(char *username, gboolean (*callback)(gpointer))
 {
@@ -334,56 +318,79 @@ int req_groups(char *username, gboolean (*callback)(gpointer))
     strcat(payload, username);
     strcat(payload, "*");
 
-    // 构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
-    pkg->package_sequence = send_package_sequence++;
-    pkg->ver = 0x1;
-    pkg->len = strlen(payload);
-    memcpy(pkg->payload, payload, sizeof(payload));
-
-    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
+    write_socket(payload);
     return 0;
 }
 
-int req_create_group(char *peers, gboolean (*callback)(gpointer))
+int req_search_group(char *keyword, gboolean (*callback)(gpointer))
 {
-    cb_req_create_groups = callback; // reg callback
+    cb_req_search_group = callback;
 
-    // 构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
-    pkg->package_sequence = send_package_sequence++;
-    pkg->ver = 0x1;
+    char payload[1024];
+    bzero(payload, sizeof(payload));
 
-    memcpy(pkg->payload, "/a", strlen("/a"));
-    memcpy(pkg->payload + 2, peers, strlen(peers));
-    pkg->len = 2 + strlen(peers);
+    strcat(payload, "/a:");
+    strcat(payload, keyword);
+    strcat(payload, "*");
 
-    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
+    write_socket(payload);
     return 0;
 }
 
-int req_quit_group(int groupId)
+int req_create_group(char *username, char *groupName)
 {
-    // 构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
-    pkg->package_sequence = send_package_sequence++;
-    pkg->ver = 0x1;
+    //cb_req_create_groups = callback; // reg callback
+    char payload[1024];
+    bzero(payload, sizeof(payload));
 
-    memcpy(pkg->payload, "/b", strlen("/b"));
-    memcpy(pkg->payload + 2, &groupId, sizeof(groupId));
-    pkg->len = 2 + sizeof(groupId);
+    strcat(payload, "/b");
+    strcat(payload, username);
+    strcat(payload, ":");
+    strcat(payload, groupName);
+    strcat(payload, "*");
 
-    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
+    write_socket(payload);
     return 0;
 }
+
+int req_quit_group(char *username, char *groupName)
+{
+    char payload[1024];
+    bzero(payload, sizeof(payload));
+
+    strcat(payload, "/q");
+    strcat(payload, username);
+    strcat(payload, ":");
+    strcat(payload, groupName);
+    strcat(payload, "*");
+
+    write_socket(payload);
+    return 0;
+}
+
 /********************************************************************************
-Description : Get_Chat_record_Public
-Parameter   : char *Group_Id, void (*callback)(char *contacts_raw)
-Return      : int (0 == success, -1 == failed)
-Side effect :
+Description : Get_Chat_record_Private
 Author      : zhq
 Date        : 2018.9.4
 ********************************************************************************/
+int req_chat_record_unicast(char *peer, gboolean (*callback)(gpointer))
+{
+    cb_chat_record_unicast = callback;
+
+    //构造数据包
+    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
+    pkg->package_sequence = send_package_sequence++;
+    pkg->ver = 0x1;
+
+    memcpy(pkg->payload, "/4", strlen("/4"));
+    memcpy(pkg->payload + 2, peer, strlen(peer));
+    pkg->len = 2 + strlen(peer);
+
+    //发送
+    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
+    return 0;
+}
+
 
 int req_chat_record_multicast(unsigned int groupId, gboolean (*callback)(gpointer))
 {
@@ -403,23 +410,6 @@ int req_chat_record_multicast(unsigned int groupId, gboolean (*callback)(gpointe
     return 0;
 }
 
-int req_chat_record_unicast(char *peer, gboolean (*callback)(gpointer))
-{
-    cb_chat_record_unicast = callback;
-
-    //构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + 1024];
-    pkg->package_sequence = send_package_sequence++;
-    pkg->ver = 0x1;
-
-    memcpy(pkg->payload, "/4", strlen("/4"));
-    memcpy(pkg->payload + 2, peer, strlen(peer));
-    pkg->len = 2 + strlen(peer);
-
-    //发送
-    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
-    return 0;
-}
 
 /********************************************************************************
 Description : File_private_for_server
@@ -548,11 +538,6 @@ static void *thread_recv_file(void *ip)
     }
 }
 
-void reg_cb_connection_lost(gboolean (*callback)(gpointer))
-{
-    cb_connection_lost = callback;
-}
-
 /********************************************************************************
 Description : 客户机接收线程
 Parameter   : 
@@ -645,19 +630,38 @@ static void *pthread(void *arg)
             }
             contacts.count = cnt;
             //事件：好友列表已更新
-            g_idle_add(cb_req_contacts, &contacts);
-        }
-        // /9 group
-        else if (pkg->payload[0] == '/' && (pkg->payload[1] == '9'))
-        {
-            contacts.count = pkg->len / sizeofEntity;
-            for (int i = 0; i < contacts.count; i++)
+            switch(pkg->payload[1])
             {
-                memcpy(&contacts.content[i], &pkg->payload[2 + i * sizeofEntity], sizeofEntity);
+                case '2': g_idle_add(cb_req_contacts,&contacts);break;
+                case '3': g_idle_add(cb_req_add_contacts,&contacts);break;
+                case '5': g_idle_add(cb_req_search_contacts,&contacts);break;
+                case '6': g_idle_add(cb_req_delete_contacts,&contacts);break;
             }
+        }
+        // /9 grouplist, /a search, /b create, /q quit
+        else if (pkg->payload[0] == '/' && (pkg->payload[1] == '9' || pkg->payload[1] == 'a' || pkg->payload[1] == 'b' || pkg->payload[1] == 'q'))
+        {
+            int cnt = 0;
+            int offset = 4, bytes_read = 0;
+            sscanf(msg + offset, "%d%n", &cnt, &bytes_read);
+            offset += bytes_read;
+            //offset++;
 
+            for (int i = 0; i < cnt; i++)
+            {
+                sscanf(msg + offset, "%s%d%n", contacts.content[i].nickname, &contacts.content[i].avatar_id, &bytes_read);
+                offset += bytes_read;
+                //offset++;
+            }
+            contacts.count = cnt;
             //事件：group列表已更新
-            g_idle_add(cb_req_groups, &contacts);
+            switch(pkg->payload[1])
+            {
+                case '9': g_idle_add(cb_req_groups,&contacts);break;
+                case 'a': g_idle_add(cb_req_search_group,&contacts);break;
+                //case '5': g_idle_add(cb_search_contacts,&contacts);break;
+                //case '6': g_idle_add(cb_req_delete_contacts,&contacts);break;
+            }
         }
         //传文件的目标ip
         else if (pkg->payload[0] == '#')
@@ -776,12 +780,9 @@ void reconnect()
 {
     for (;;)
     {
-        if (1)
-        {
-            printf("[Error] Connection Lost\n");
-            if (cb_connection_lost)
-                g_idle_add(cb_connection_lost, (void *)10086);
-        }
+        
+        printf("[Error] Connection Lost\n");
+            
         close(sockfd);
         sockfd = socket(AF_INET, SOCK_STREAM, 0); //tcp
 
