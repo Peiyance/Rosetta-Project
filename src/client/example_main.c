@@ -20,6 +20,11 @@ void on_button_clicked(GtkWidget *button, gpointer userdata)
     //req_authentication("u","p",on_finish);
     //File_private("/media/psf/Data/Stellardrone - Billions And Billions.mp3","myName");
     //post_msg_unicast("123","hello1234567890");
+    char user[]="1234";
+    char msg[]="12345";
+    post_msg_unicast(user, msg);
+    printf("send !");
+    //File_private("/var/tmp/a.txt","myName");
     req_contacts("fihxc",on_finish);
 }
 
