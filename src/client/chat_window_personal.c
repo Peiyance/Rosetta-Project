@@ -217,9 +217,9 @@ void group_send_msg_in(GtkWidget* trigger, Entity* who)
 {
     int id = get_group_local_id(who->nickname);
     GtkTextIter start,end;
-    gtk_text_buffer_get_bounds(GTK_TEXT_BUFFER(input_text_buffer),&start,&end);
+    gtk_text_buffer_get_bounds(GTK_TEXT_BUFFER(group_input_text_buffer),&start,&end);
     static char input[500];
-    sprintf(input,"%s\n", gtk_text_buffer_get_text(GTK_TEXT_BUFFER(input_text_buffer),&start,&end,FALSE));
+    sprintf(input,"%s\n", gtk_text_buffer_get_text(GTK_TEXT_BUFFER(group_input_text_buffer),&start,&end,FALSE));
     gtk_text_buffer_set_text(input_text_buffer,"",0); 
      post_msg_multicast(who->nickname, input);
     update_buffer(g_msgbufs[id], input, myself->nickname);
