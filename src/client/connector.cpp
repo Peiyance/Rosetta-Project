@@ -585,12 +585,13 @@ static void *pthread(void *arg)
 
             if (pkg->len >= 4) //success
             {
-                sscanf(msg + 3, "%s%d", self.nickname, &self.avatar_id);
+                sscanf(msg + 2, "%s%d", self.nickname, &self.avatar_id);
                 //strcpy(self.nickname, "myusername!");
                 //self.avatar_id = 3;
                 //事件：登陆结果;
                 g_idle_add(cb_req_authentication, (void *)&self);
             }
+
 
             else
             {
@@ -633,8 +634,10 @@ static void *pthread(void *arg)
             switch(pkg->payload[1])
             {
                 case '2': g_idle_add(cb_req_contacts,&contacts);break;
-                case '3': g_idle_add(cb_req_add_contacts,&contacts);break;
-                case '5': g_idle_add(cb_req_search_contacts,&contacts);break;
+                case '3': g_idle_add(cb_req_add_contacts,&contacts);
+                            sleep(0.1); 
+                          g_idle_add(cb_req_contacts,&contacts);break;
+                case '5': g_idle_add(cb_req_search_contacts,&contacts); break;
                 case '6': g_idle_add(cb_req_delete_contacts,&contacts);break;
             }
         }
@@ -679,7 +682,7 @@ static void *pthread(void *arg)
         // 私聊消息
         else
         {
-            g_idle_add(cb_recv_unicast, &pkg->payload[2]); //风险操作：pkg生命周期？
+            g_idle_add(cb_recv_unicast, &pkg->payload[0]); //风险操作：pkg生命周期？
         }
 
         printf("recv %s from server\n", pkg->payload);

@@ -5,7 +5,7 @@
 #include "common.h"
 
 
-char remoteIP[] = "192.168.0.100";
+char remoteIP[] = "172.20.10.2";
 short remotePort = 10005;
 int count = 0;
 GtkWidget *window;
