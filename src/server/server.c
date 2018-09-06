@@ -18,9 +18,12 @@
 #include<pthread.h>
 #include<sys/shm.h>
 #include<time.h>
-#include"database.h"
+#include"server.c"
+#ifndef database_h
+#define database_h
+#endif
 
-#define MYPORT    8000                          //server's listen port
+#define MYPORT    10005                          //server's listen port
 #define PORT      8081                          //the begin of srever's chat port
 #define CLPORT    8079                          //client's chat port
 #define MYKEY   12345
@@ -33,575 +36,6 @@ char online_user[MAX_USER_NUM][10];
 int  ary_sockfd[MAX_USER_NUM];                         //arrar for clients' sockfd
 int global_current_sockfd;
 
-/********************************************************************************
- Description : sign up in database
- Prameter    : Function is not completed.
- Return      : int (1 == success, 0 == failed)
- Side effect :
- Author      : zpy
- Date        : 2018.9.2
- ********************************************************************************/
-int check_signup(const char* line)
-{
-    MYSQL *conn;
-    MYSQL_RES *res;
-    MYSQL_ROW row;
-    //making connection
-    conn = mysql_init(NULL);
-    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
-    {
-        fprintf(stderr, "%s\n", mysql_error(conn));
-        exit(1);
-    }
-    
-    //get name and password
-    char user_name[20];
-    char user_pw[20];
-    int i =9,j=0;
-    while (line[i]&&line[i]!=';')
-    {
-        user_name[j]=line[i];
-        i++; j++;
-    }
-    user_name[j]=0;
-    i+=10; j=0;
-    while (line[i]&&line[i]!=';')
-    {
-        user_pw[j]=line[i];
-        i++; j++;
-    }
-    user_pw[j]=0;
-    
-    //check if the username exit
-    char comm[1024];
-    int ans=0;
-    sprintf(comm,"select * from alluser where username = '%s';",user_name);
-    if (mysql_query(conn,comm))
-    {
-        fprintf(stderr, "%s\n", mysql_error(conn));
-        exit(1);
-    }
-    res = mysql_use_result(conn);
-    while ((row = mysql_fetch_row(res)) != NULL)
-    {
-        ans++;                            //remember the output number!!
-    }
-    if(ans!=0)                            //if user_name exist!
-    {
-        //printf("username exist!\n");
-        mysql_free_result(res);
-        mysql_close(conn);
-        return 0;
-    }
-    else  //start insertion
-    {
-        char comm1[1024] ="\0";
-        sprintf(comm1,"insert into alluser values ('%s','%s');",user_name,user_pw);
-        if (mysql_query(conn,comm1))
-        {
-            fprintf(stderr, "%s\n", mysql_error(conn));
-            //exit(1);
-        }
-        char comm2[1024]="\0";
-        sprintf(comm2,"insert into avator values ('%s',0)",user_name);
-        if (mysql_query(conn,comm2));
-        {
-            fprintf(stderr, "%s\n", mysql_error(conn));
-            //exit(1);
-        }
-        mysql_free_result(res);
-        mysql_close(conn);
-        return 1;
-    }
-}
-
-/********************************************************************************
- Description : login in database
- Parameter    : Function is not completed.
- Return      : int (1 == success, 0 == failed)
- Side effect :
- Author      : zpy
- Date        : 2018.9.2
- ********************************************************************************/
-int check_login(const char* line)
-{
-    MYSQL *conn;
-    MYSQL_RES *res;
-    MYSQL_ROW row;
-    conn = mysql_init(NULL);
-    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
-    {
-        //fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    
-    //get name and password
-    char user_name[20];
-    char user_pw[20];
-    int i=9,j=0;
-    while (line[i]&&line[i]!=';')
-    {
-        user_name[j]=line[i];
-        i++; j++;
-    }
-    user_name[j]=0;
-    i+=10; j=0;
-    while (line[i]&&line[i]!=';')
-    {
-        user_pw[j]=line[i];
-        i++; j++;
-    }
-    user_pw[j]=0;
-    
-    //select data
-    char comm[1024]="\0";
-    int ans=0;
-    sprintf(comm,"select * from alluser where username = '%s' and password = '%s';",
-            user_name,user_pw);
-    if (mysql_query(conn,comm))
-    {
-        ///fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    res = mysql_use_result(conn);
-    while ((row = mysql_fetch_row(res)) != NULL)
-    {
-        ans++;
-        //printf("%s %s\n", row[0],row[1]); //remember the output number!!
-    }
-    if(ans==0)
-    {
-        mysql_free_result(res);
-        mysql_close(conn);
-        return 0;
-    }
-    
-    //ending
-    mysql_free_result(res);
-    mysql_close(conn);
-    return 1;
-}
-
-/********************************************************************************
- Description : check if the user exist
- Prameter    : Function done
- Return      : int (0=no,1=exist)
- Side effect : none
- Author      : zpy
- Date        : 2018.9.2
- ********************************************************************************/
-int if_user_exist(const char* line)
-{
-    //making connection
-    MYSQL *conn;
-    MYSQL_RES *res;
-    MYSQL_ROW row;
-    conn = mysql_init(NULL);
-    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
-    {
-        //fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    
-    //start deletion
-    char comm[1024] ="\0";
-    sprintf(comm,"select * from alluser where username = '%s';",line);
-    if (mysql_query(conn,comm))
-    {
-        //fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    int ans=0;
-    res = mysql_use_result(conn);
-    while ((row = mysql_fetch_row(res)) != NULL)
-    {
-        ans++;
-        //printf("%s %s\n", row[0],row[1]); //remember the output number!!
-    }
-    if(ans==0)
-    {
-        mysql_free_result(res);
-        mysql_close(conn);
-        return 0;
-    }
-    
-    //ending
-    mysql_free_result(res);
-    mysql_close(conn);
-    return 1;
-}
-
-/********************************************************************************
- Description : check if the group exist
- Prameter    : Function done
- Return      : int (0=no,1=exist)
- Side effect : none
- Author      : zpy
- Date        : 2018.9.3
- ********************************************************************************/
-int if_group_exist(const char* line)
-{
-    //making connection
-    MYSQL *conn;
-    MYSQL_RES *res;
-    MYSQL_ROW row;
-    conn = mysql_init(NULL);
-    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
-    {
-        //fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    
-    //start deletion
-    char comm[1024] ="\0";
-    sprintf(comm,"select * from allgroup where groupname = '%s';",line);
-    
-    if (mysql_query(conn,comm))
-    {
-        //fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    int ans=0;
-    res = mysql_use_result(conn);
-    while ((row = mysql_fetch_row(res)) != NULL)
-    {
-        ans++;
-        //printf("%s %s\n", row[0],row[1]); //remember the output number!!
-    }
-    if(ans==0)
-    {
-        mysql_free_result(res);
-        mysql_close(conn);
-        return 0;
-    }
-    
-    //ending
-    mysql_free_result(res);
-    mysql_close(conn);
-    return 1;
-}
-
-
-/********************************************************************************
- Description : search avator from db
- Prameter    : Function done
- Return      : int (numbers of avator)        considering
- Side effect : none
- Author      : zpy
- Date        : 2018.9.3
- ********************************************************************************/
-int search_avator_from_db(const char* username)
-{
-    //making connection
-    MYSQL *conn;
-    MYSQL_RES *res;
-    MYSQL_ROW row;
-    conn = mysql_init(NULL);
-    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
-    {
-        //fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    
-    //start deletion
-    char comm[1024] ="\0";
-    sprintf(comm,"select number from avator where username = '%s';",username);
-    if (mysql_query(conn,comm))
-    {
-        //fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    int ans;
-    res = mysql_use_result(conn);
-    while ((row = mysql_fetch_row(res)) != NULL)
-    {
-        ans = atoi(row[0]);
-        //printf("%s %s\n", row[0],row[1]); //remember the output number!!
-    }
-    mysql_free_result(res);
-    mysql_close(conn);
-    return ans;
-}
-
-/********************************************************************************
- Description : change default avator in db
- Prameter    : Function done           can be expanded
- Return      : void
- Side effect : none
- Author      : zpy
- Date        : 2018.9.3
- ********************************************************************************/
-void change_avator_in_db(const char* username,int id)
-{
-    //making connection
-    MYSQL *conn;
-    MYSQL_RES *res;
-    MYSQL_ROW row;
-    conn = mysql_init(NULL);
-    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
-    {
-        //fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    
-    //start deletion
-    char comm[1024] ="\0";
-    sprintf(comm,"update avator set number = %d where username = '%s';",id,username);
-    if (mysql_query(conn,comm))
-    {
-        //fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    mysql_close(conn);
-    return;
-}
-
-/********************************************************************************
- Description : add friend in database
- Prameter    : Function done
- Return      : void
- Side effect : none
- Author      : zpy
- Date        : 2018.9.2
- ********************************************************************************/
-void insert_friend_into_database(const char* name1,const char* name2)
-{
-    //making connection
-    MYSQL *conn;
-    MYSQL_RES *res;
-    MYSQL_ROW row;
-    conn = mysql_init(NULL);
-    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
-    {
-        // fprintf(stderr, "%s\n", mysql_error(conn));
-        // exit(1);
-    }
-    
-    //check if the username exit
-    char comm[1024];
-    int ans=0;
-    sprintf(comm,"select * from friend_list where p1 = '%s' and p2 = '%s';",name1,name2);
-    if (mysql_query(conn,comm))
-    {
-        // fprintf(stderr, "%s\n", mysql_error(conn));
-        // exit(1);
-    }
-    res = mysql_use_result(conn);
-    while ((row = mysql_fetch_row(res)) != NULL)
-    {
-        //printf("%s %s\n", row[0],row[1]); //remember the output number!!
-        ans++;
-    }
-    if(ans!=0)                            //if user_name exist!
-    {
-        mysql_free_result(res);
-        mysql_close(conn);
-        return ;
-    }
-    else  //start insertion
-    {
-        char comm1[1024] ="\0";
-        sprintf(comm1,"insert into friend_list values ('%s','%s');",name1,name2);
-        if (mysql_query(conn,comm1))
-        {
-            //fprintf(stderr, "%s\n", mysql_error(conn));
-            //exit(1);
-        }
-        char comm2[1024] ="\0";
-        sprintf(comm2,"insert into friend_list values ('%s','%s');",name2,name1);
-        if (mysql_query(conn,comm2))
-        {
-            // fprintf(stderr, "%s\n", mysql_error(conn));
-            //exit(1);
-        }
-    }
-    mysql_free_result(res);
-    mysql_close(conn);
-    return;
-}
-
-
-
-
-/*int get_friend_list_from_db(const char* name,char* list)
- {
- //making connection
- MYSQL *conn;
- MYSQL_RES *res;
- MYSQL_ROW row;
- conn = mysql_init(NULL);
- if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
- {
- // fprintf(stderr, "%s\n", mysql_error(conn));
- //exit(1);
- }
- 
- //check if the username exit
- char comm[1024]="\0",line[2000]="\0";
- //memset(line,0,sizeof(line));
- int ans=0;
- sprintf(comm,"select p2 from friend_list where p1 = '%s';",name);
- if (mysql_query(conn,comm))
- {
- //fprintf(stderr, "%s\n", mysql_error(conn));
- //exit(1);
- }
- res = mysql_use_result(conn);
- while ((row = mysql_fetch_row(res)) != NULL)
- {
- //printf("%s\n", row[0]); //remember the output number!!
- ans++;
- strcat(line,row[0]);
- strcat(line,"\n");
- }
- //strcat(line,0);
- strcpy(list,line);
- mysql_free_result(res);
- mysql_close(conn);
- return ans;
- }*/
-
-/********************************************************************************
- Description : get group users from db
- Prameter    : Function done
- Return      : int(number of group members)
- Side effect : none
- Author      : zpy
- Date        : 2018.9.2
- ********************************************************************************/
-int get_group_users_from_db(const char* groupname, char list[][100])
-{
-    MYSQL *conn;
-    MYSQL_RES *res;
-    MYSQL_ROW row;
-    
-    conn = mysql_init(NULL);
-    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
-    {
-        // fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    
-    char comm[1024]="\0",line[2000]="\0";
-    //memset(line,0,
-    int ans=0;
-    
-    sprintf(comm,"select username from alluser a, group_list g where g.p2 = 'g1' and g.p1 = a.username ;",groupname);
-    
-    if (mysql_query(conn,comm))
-    {
-        //fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    res = mysql_use_result(conn);
-    while ((row = mysql_fetch_row(res)) != NULL)
-    {
-        //printf("%s %s\n", row[0]); //remember the output number!!
-        ans++;
-        strcpy(list[ans-1],row[0]);
-    }
-    //strcat(line,0);
-    //strcpy(list,line);
-    mysql_free_result(res);
-    mysql_close(conn);
-    return ans;
-}
-
-/********************************************************************************
- Description : get friend list from db
- Prameter    : Function done
- Return      : int (number of friends)
- Side effect : none
- Author      : zpy
- Date        : 2018.9.2
- ********************************************************************************/
-int get_friend_list_from_db(const char* name,char* list)
-{
-    //making connection
-    MYSQL *conn;
-    MYSQL_RES *res;
-    MYSQL_ROW row;
-    conn = mysql_init(NULL);
-    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
-    {
-        // fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    
-    //check if the username exit
-    char comm[1024]="\0",line[2000]="\0";
-    //memset(line,0,sizeof(line));
-    int ans=0;
-    sprintf(comm,"select friend_list.p2,avator.number from friend_list,avator where friend_list.p2=avator.username and p1 = '%s';",name);
-    if (mysql_query(conn,comm))
-    {
-        //fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    res = mysql_use_result(conn);
-    while ((row = mysql_fetch_row(res)) != NULL)
-    {
-        //printf("%s %s\n", row[0]); //remember the output number!!
-        ans++;
-        strcat(line,row[0]);
-        strcat(line,"\n");
-        strcat(line,row[1]);
-        strcat(line,"\n");
-    }
-    //strcat(line,0);
-    strcpy(list,line);
-    mysql_free_result(res);
-    mysql_close(conn);
-    return ans;
-}
-
-/********************************************************************************
- Description : get group list from db
- Prameter    : Function done
- Return      : int (number of groups)
- Side effect : none
- Author      : zpy
- Date        : 2018.9.3
- ********************************************************************************/
-int get_group_list_from_db(const char* name,char* list)
-{
-    //making connection
-    MYSQL *conn;
-    MYSQL_RES *res;
-    MYSQL_ROW row;
-    conn = mysql_init(NULL);
-    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
-    {
-        // fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    
-    //check if the username exit
-    char comm[1024]="\0",line[2000]="\0";
-    //memset(line,0,sizeof(line));
-    int ans=0;
-    sprintf(comm,"select group_list.p2, group_avator.number from group_list, group_avator where group_list.p2=group_avator.groupname and group_list.p1 = '%s';",name);
-    if (mysql_query(conn,comm))
-    {
-        //fprintf(stderr, "%s\n", mysql_error(conn));
-        //exit(1);
-    }
-    res = mysql_use_result(conn);
-    while ((row = mysql_fetch_row(res)) != NULL)
-    {
-        //printf("%s %s\n", row[0]); //remember the output number!!
-        ans++;
-        strcat(line,row[0]);
-        strcat(line,"\n");
-        strcat(line,row[1]);
-        strcat(line,"\n");
-    }
-    //strcat(line,0);
-    strcpy(list,line);
-    mysql_free_result(res);
-    mysql_close(conn);
-    return ans;
-}
 
 /********************************************************************************
  Description : search user from db
@@ -715,7 +149,7 @@ int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char
     int trash;
     int avatorID;
     FILE* p_offline_msg=NULL;
-    
+    printf("!!!!!!!!!!\n");
     if(original_msg[1]=='0')                     //log in
     {
         if(check_login(original_msg+3))                   //log in success
@@ -978,14 +412,17 @@ int process_msg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_m
     int len;
     FILE* p_offline_msg=NULL;
     
-    for(i=0;i<100&&original_msg[i]!=':';i++)
+    printf("%s\n",original_msg);                           // delete later;
+    for(i=0;i<100&&original_msg[i]!=',';i++)
         opp_name[i]=original_msg[i];
-    opp_name[i]=0;
+    opp_name[i]='\0';
     
     if(if_user_exist(opp_name)==0)
     {
         strcpy(p_msg_to_slef,"User not exist\n");
         *p_msg_to_opp=0;
+        printf("%s\n",p_msg_to_slef);
+        printf("%s\n",original_msg);
         return 0;
     }
     else
@@ -1007,7 +444,7 @@ int process_msg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_m
             strcat(p_msg_to_opp,":");
             len=strlen(online_user[current_userID])+1;
             strcat(p_msg_to_opp,original_msg+len);
-            //printf("%s\n",p_msg_to_opp);
+            printf("%s\n",p_msg_to_opp);
             fprintf(p_offline_msg,"%s\n",p_msg_to_opp);
             fclose(p_offline_msg);
         }
@@ -1191,7 +628,7 @@ int process_file(int* p_to_sockfd,int current_userID,char *p_msg_to_opp,const ch
  * Author      : zpy
  * Date        : 2018.9.2
  ********************************************************************************/
-void* _pthread_entrance(void* p,char *addr)
+void* _pthread_entrance(void* p)
 {
     char buf[100];
     char temp[100];
@@ -1209,6 +646,8 @@ void* _pthread_entrance(void* p,char *addr)
             break;
     current_user_ID=i;
     
+    char* try = (char*)p;
+    
     while(1)
     {
         memset(buf,0,100);
@@ -1225,6 +664,7 @@ void* _pthread_entrance(void* p,char *addr)
         }
         else
         {
+            printf("%s\n",buf);
             if(buf[0]=='/')
             {
                 process_command(&opposite_user_sockfd,current_user_ID,msg_to_self,msg_to_opp,buf);
@@ -1236,7 +676,7 @@ void* _pthread_entrance(void* p,char *addr)
             }
             else if(buf[0]=='#')
             {
-                process_file(&opposite_user_sockfd,current_user_ID,msg_to_opp,buf,recvbytes,addr);
+                process_file(&opposite_user_sockfd,current_user_ID,msg_to_opp,buf,recvbytes,try);
                 if(opposite_user_sockfd>0)
                 {
                     send(opposite_user_sockfd,msg_to_opp,recvbytes,0);
@@ -1249,6 +689,7 @@ void* _pthread_entrance(void* p,char *addr)
             }
             else
             {
+                printf("cccccc\n");
                 process_msg(&opposite_user_sockfd,current_user_ID,msg_to_self,msg_to_opp,buf);
                 //send(current_user_sockfd,msg_to_self,strlen(msg_to_self)+1,0);
                 if(opposite_user_sockfd>0)
@@ -1272,100 +713,69 @@ void* _pthread_entrance(void* p,char *addr)
 int main()
 {
     int i;
-    
     char buf[100];
     int listen_sockfd;                           //server's listen socketfd
-    //int client_sockfd;                           //client's listen socketfd
-    // int _2_server_sockfd;                           //chat socketfd
     socklen_t listen_len;
     socklen_t client_len;
     socklen_t server_len;
     struct sockaddr_in listen_sockaddr;
     struct sockaddr_in client_sockaddr;
-    struct sockaddr_in server_sockaddr;
-    //the number of current online user
+    struct sockaddr_in server_sockaddr;//the number of current online user
     struct in_addr client_ip;                    //the client's address information
     pthread_t ptid[MAX_USER_NUM];
-    
     char try[100];
-    
     printf("\n======================server initialization======================\n");
+    listen_sockfd = socket(AF_INET,SOCK_STREAM, 0);                        // 定义套接字类型
+    listen_sockaddr.sin_family = AF_INET;
+    listen_sockaddr.sin_port = htons(MYPORT);
+    listen_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    listen_len = sizeof(listen_sockaddr);
+    int on=1;
+    setsockopt(listen_sockfd,SOL_SOCKET,SO_REUSEADDR,&on,sizeof(on));
+    if(bind(listen_sockfd,(struct sockaddr *)&listen_sockaddr,listen_len)==-1)
+    {
+        perror("bind");
+        exit(1);
+    }
+    else
+    {
+        printf("A new socket bind success\n");
+    }
+    if(listen(listen_sockfd,5) == -1)
+    {
+        perror("listen");
+        exit(1);
+    }
     while(1)
     {
         struct in_addr sin_addr;
-        
-        listen_sockfd = socket(AF_INET,SOCK_STREAM, 0);                        // 定义套接字类型
-        listen_sockaddr.sin_family = AF_INET;
-        listen_sockaddr.sin_port = htons(MYPORT);
-        listen_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-        listen_len = sizeof(listen_sockaddr);
-        
-        int on = 1;                              //允许重复使用本地地址和套接字绑定
-        setsockopt(listen_sockfd,SOL_SOCKET,SO_REUSEADDR,&on,sizeof(on));
-        
-        if(bind(listen_sockfd,(struct sockaddr *)&listen_sockaddr,listen_len)==-1)
-        {
-            perror("bind");
-            exit(1);
-        }
-        else
-        {
-            //printf("A new socket bind success\n");
-        }
-        
-        if(listen(listen_sockfd,5) == -1)
-        {
-            perror("listen");
-            exit(1);
-        }
-        
-        client_len = sizeof(client_sockaddr);
-        //listen_len = sizeof(listen_sockaddr);
-        
+        client_len = sizeof(client_sockaddr); //listen_len = sizeof(listen_sockaddr);
+        printf("Taht\n");
         if((client_sockfd=accept(listen_sockfd,(struct sockaddr *)&client_sockaddr,&client_len))==-1)
         {
             perror("accept error");
             exit(1);
         }
         else                                     //connect success
-        {   sin_addr=client_sockaddr.sin_addr;
+        {
+            
+            sin_addr=client_sockaddr.sin_addr;
             itoa(PORT+userNum,buf);
             send(client_sockfd,buf,strlen(buf),0);
-            //userNum++;
         }
         for(i=0;i<MAX_USER_NUM;i++)
             if(ary_sockfd[i]==0)
                 break;
-        //ary_sockfd[i]=client_sockfd;
-        //global_current_sockfd=client_sockfd;
-        
-        //pthread_create(&ptid[i],NULL,_pthread_entrance,NULL);
-        
         strcpy(try,inet_ntoa(client_sockaddr.sin_addr));
-        
-        _2_server_sockfd = socket(AF_INET,SOCK_STREAM, 0); // 定义套接字类型
-        server_sockaddr.sin_family = AF_INET;
-        server_sockaddr.sin_port = htons(PORT+userNum);
-        server_sockaddr.sin_addr=sin_addr;
-        server_len = sizeof(server_sockaddr);
-        bzero(&(server_sockaddr.sin_zero),sizeof(server_sockaddr.sin_zero));
         sleep(1);
         for(i=0;i<MAX_USER_NUM;i++)
             if(ary_sockfd[i]==0)
                 break;
-        ary_sockfd[i]=_2_server_sockfd;
-        global_current_sockfd=_2_server_sockfd;
-        
-        if (connect(_2_server_sockfd, (struct sockaddr *)&server_sockaddr,sizeof(struct sockaddr_in)) == -1)
-        {
-            perror("connect");
-            exit(1);
-        }
-        else
-        {
-            userNum++;
-        }
-        pthread_create(&ptid[userNum],NULL,_pthread_entrance(NULL,try),NULL);
+        ary_sockfd[i]=client_sockfd;
+        global_current_sockfd=client_sockfd;
+        printf("Maybe\n");
+        userNum++;
+        pthread_create(&ptid[userNum],NULL,_pthread_entrance(&try),NULL);
         close(listen_sockfd);
     }
 }
