@@ -5,7 +5,6 @@
 	> Created Time: Wed 05 Sep 2018 10:45:59 AM CST
  ************************************************************************/
 #include "GUI.h"
-
 void  load_setting_windows()
 {
     GtkWidget *window;
@@ -46,14 +45,17 @@ void  load_setting_windows()
     GtkWidget *delete_group = gtk_menu_item_new_with_label("删除群");
         gtk_menu_shell_append(GTK_MENU_SHELL(menu_friend_groups_settings),delete_group);
       // g_signal_connect(G_OBJECT(delete_group),"activate",G_CALLBACK(load_add_new_friend_window), 3);
+    GtkWidget *create_group = gtk_menu_item_new_with_label("创建群");
+        gtk_menu_shell_append(GTK_MENU_SHELL(menu_friend_groups_settings),create_group);
     gtk_menu_shell_append(GTK_MENU_SHELL(menubar),friends_groups_settings);
 
     GtkWidget *menu_change_interface = gtk_menu_new();
     GtkWidget *change_interface = gtk_menu_item_new_with_label("修改界面");
-        gtk_menu_item_set_submenu(GTK_MENU_ITEM(change_interface),menu_change_interface);
-    GtkWidget *change_bg_img = gtk_menu_item_new_with_label("修改背景图片");
-        gtk_menu_shell_append(GTK_MENU_SHELL(menu_change_interface),change_bg_img);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menubar),change_interface);
+  //      gtk_menu_item_set_submenu(GTK_MENU_ITEM(change_interface),menu_change_interface);
+  //  GtkWidget *change_bg_img = gtk_menu_item_new_with_label("修改背景图片");
+    //    gtk_menu_shell_append(GTK_MENU_SHELL(menu_change_interface),change_bg_img);
+  //  g_signal_connect(G_OBJECT(change_bg_img),"activate",G_CALLBACK(chang_theme),1);
+   // gtk_menu_shell_append(GTK_MENU_SHELL(menubar),change_interface);
 
     GtkWidget *menu_change_personal_info=gtk_menu_new();
     GtkWidget *change_personal_info = gtk_menu_item_new_with_label("修改个人信息");
