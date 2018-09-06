@@ -1,3 +1,6 @@
+#ifndef _H_CONNECTOR
+#define _H_CONNECTOR
+
 #include <gtk/gtk.h>
 
 // interfaces
@@ -35,3 +38,5 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif /* end of __cplusplus */
+
+#endif

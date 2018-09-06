@@ -65,7 +65,13 @@ using namespace connector;
 
 
 // Interfaces
-// returns sockfd. create a thread maintaining the long-term TCP.
+/********************************************************************************
+Description : initialize connector.
+Parameter   : remoteIp, remotePort
+Return      : int (0 == failed, sockfd == success)
+Author      : zyc
+Date        : 2018.9.3
+********************************************************************************/
 int init_connector(char remoteIP[], short remotePort)
 {
     sockfd = socket(AF_INET, SOCK_STREAM, 0);      //tcp
@@ -261,15 +267,7 @@ int req_add_contacts(char *username, char *contact_name, gboolean (*callback)(gp
     strcat(payload, contact_name);
     strcat(payload, "*");
 
-    // 构造数据包
-    Package *pkg = (Package *)new char[sizeof(Package) + sizeof(payload)];
-    pkg->package_sequence = send_package_sequence++;
-    pkg->ver = 0x1;
-    pkg->len = strlen(payload);
-    memcpy(pkg->payload, payload, sizeof(payload));
-
-    //发送
-    write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
+    write_socket(payload);
     return 0;
 }
 /********************************************************************************
@@ -306,7 +304,13 @@ int req_delete_contacts(char *username, char *contact_name, gboolean (*callback)
 }
 
 
-
+/********************************************************************************
+Description : 请求群聊列表
+Parameter   : username, callback
+Return      : int (0 == success, -1 == failed)
+Author      : zyc
+Date        : 2018.9.4
+********************************************************************************/
 int req_groups(char *username, gboolean (*callback)(gpointer))
 {
     cb_req_groups = callback; // reg callback
@@ -572,12 +576,9 @@ static void *pthread(void *arg)
 
         /* for debugging */
         char msg[1024];
-        //memset(msg,0,sizeof(MAX_BUF));
         strcpy(msg, pkg->payload);
 
-        int sizeofEntity = 38; // 不知为何sizeof(Entity)是40
-
-        // 解包，PostMessage
+        // 解包，DispatchMessage
         //Package *pkg = (Package *)msg;
         // /0 login
         if (pkg->payload[0] == '/' && pkg->payload[1] == '0')
@@ -686,6 +687,7 @@ static void *pthread(void *arg)
     }
 }
 
+//转义 （未使用）
 char *escape_string(char *msg, char *escaped)
 {
     int temp[1024], cnt = 0, temp_cnt = 0, i;
@@ -719,7 +721,7 @@ char *escape_string(char *msg, char *escaped)
     return escaped;
 }
 /********************************************************************************
-Description : Divide_String
+Description : 解转义 （未使用）
 Parameter   : char *msg, char **Divided_Strings
 Return      : char ** Divided_Strings
 Side effect :
@@ -776,6 +778,12 @@ int write_socket(char *payload)
     return 0;
 }
 
+
+/********************************************************************************
+Description : reconnect when lost connection with server
+Author      : zyc
+Date        : 2018.9.6
+********************************************************************************/
 void reconnect()
 {
     for (;;)
