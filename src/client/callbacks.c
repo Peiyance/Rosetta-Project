@@ -1,6 +1,25 @@
+/**************************************************/
+/*名称：callbacks.c
+/*描述：实现客户端逻辑的回调函数
+/*作成日期：2018-9-5
+/*作者：zy
+/***************************************************/
+
 #include "GUI.h"
 #include "connector.h"
-
+/**************************************************/
+/*名称：load_information
+/*描述：将list中的数据显示在存放列表的容器中
+/*作成日期： 2018-9-5
+/*参数：
+        参数1：expander、GtkWidget*、输入、存放列表的容器
+        参数2：listbox、GtkWidget** 、输入、列表
+        参数3：list、Entity *、输入、列表中存在的实体
+	参数4：cnt、int、输入、列表中实体的个数
+	参数5：cb(GtkWidget* widget, GdkEvent* event, Entity* who)、回调函数指针、输入、列表中每个控件的回调函数
+/*返回值：void
+/*作者：zy
+/***************************************************/
 void load_information(GtkWidget* expander, GtkWidget** listbox, Entity* list, int cnt, void cb(GtkWidget* widget, GdkEvent* event, Entity* who))
 {
     if(*listbox){
@@ -25,7 +44,15 @@ void load_information(GtkWidget* expander, GtkWidget** listbox, Entity* list, in
     }
     gtk_widget_show_all(expander);
 }
-
+/**************************************************/
+/*名称：msgbox
+/*描述：显示出一个窗口，窗口中显示需要显示的字符
+/*作成日期： 2018-9-5
+/*参数：
+        参数1：msg、const char*、输入、需要显示的字符串
+/*返回值：void
+/*作者：zy
+/***************************************************/
 void msgbox(const char* msg)
 {
 	GtkWidget* pop = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -37,7 +64,15 @@ void msgbox(const char* msg)
 	g_signal_connect(G_OBJECT(pop), "delete_event", G_CALLBACK(gtk_widget_destroy), NULL);
 	gtk_widget_show_all(pop);
 }
-
+/**************************************************/
+/*名称：get_friend_local_id
+/*描述：获取好友在本地的编号
+/*作成日期： 2018-9-5
+/*参数：
+        参数1：name、const char*、输入、好友的名字
+/*返回值：int类型 -1表示不存在这个用户，否则返回用户的id
+/*作者：zy
+/***************************************************/
 int get_friend_local_id(const char* name){
 	for(int i = 0; i < friend_cnt; i++){
 		if(strcmp(friendlist[i].nickname, name) == 0){
@@ -47,6 +82,15 @@ int get_friend_local_id(const char* name){
 	return -1;
 }
 
+/**************************************************/
+/*名称：get_friend_local_id
+/*描述：获取群组在本地的编号
+/*作成日期： 2018-9-5
+/*参数：
+        参数1：name、const char*、输入、群组的名字
+/*返回值：int类型 -1表示不存在这个用户，否则返回用户的id
+/*作者：zy
+/***************************************************/
 int get_group_local_id(const char* name){
 	for(int i = 0; i < group_cnt; i++){
 		if(strcmp(grouplist[i].nickname, name) == 0){
@@ -55,7 +99,15 @@ int get_group_local_id(const char* name){
 	}
 	return -1;
 }
-
+/**************************************************/
+/*名称：cb_contacts
+/*描述：获取好友列表之后的回调函数
+/*作成日期： 2018-9-5
+/*参数：
+        参数1：好友列表信息, 指针, 顺次指向一个int, 随后是struct Entity
+/*返回值：类型为gboolean
+/*作者：zy
+/***************************************************/
 gboolean cb_contacts(gpointer data)
 {
 	// unload
@@ -73,7 +125,15 @@ gboolean cb_contacts(gpointer data)
 
 	load_friend_info();
 }
-
+/**************************************************/
+/*名称：cb_groups
+/*描述：获取群组列表之后的回调函数
+/*作成日期： 2018-9-5
+/*参数：
+        参数1：群组列表信息, 指针, 顺次指向一个int, 随后是struct Entity
+/*返回值：类型为gboolean
+/*作者：zy
+/***************************************************/
 gboolean cb_groups(gpointer data)
 {
 	//unload
@@ -90,7 +150,15 @@ gboolean cb_groups(gpointer data)
 
 	load_group_info();
 }
-
+/**************************************************/
+/*名称：cb_auth
+/*描述：登陆验证完成之后的回调函数
+/*作成日期： 2018-9-5
+/*参数：
+        参数1：若成功则为指向已登陆用户的个人信息指针,  否则为null
+/*返回值：类型为gboolean
+/*作者：zy
+/***************************************************/
 gboolean cb_auth(gpointer data)
 {
 	if(data) {
@@ -106,7 +174,15 @@ gboolean cb_auth(gpointer data)
 	}
 	return FALSE;
 }
-
+/**************************************************/
+/*名称：cb_reg
+/*描述：注册完成之后的回调函数
+/*作成日期： 2018-9-5
+/*参数：
+        参数1：整数, 1: success, 0: fail
+/*返回值：类型为gboolean
+/*作者：zy
+/***************************************************/
 gboolean cb_reg(gpointer data)
 {
 	if(data){
@@ -119,7 +195,16 @@ gboolean cb_reg(gpointer data)
 	}
 	return FALSE;
 }
-
+/**************************************************/
+/*名称：on_click_****
+/*描述：GUI点击事件的回调
+/*作成日期： 2018-9-5
+/*参数：
+        参数1：触发控件
+	参数2: 附带参数
+/*返回值：类型为void
+/*作者：zy
+/***************************************************/
 void on_click_signup_return(gpointer button, gpointer window)
 {
 	gtk_widget_destroy(window); 
@@ -155,7 +240,15 @@ void on_click_group(GtkWidget* widget, GdkEvent* event, Entity* who)
 {
 	load_chat_group_window(who);
 }
-
+/**************************************************/
+/*名称：on_recv_xxx_msg
+/*描述：获取到消息之后的回调函数
+/*作成日期： 2018-9-5
+/*参数：
+        参数1：若成功则为指向已登陆用户的个人信息指针,  否则为null
+/*返回值：类型为gboolean
+/*作者：zy
+/***************************************************/
 gboolean on_recv_unicast_msg(gpointer data)
 {
 	// char* str = 
@@ -167,7 +260,15 @@ gboolean on_recv_multicast_msg(gpointer data)
 	return FALSE;
 }
 
-//search users
+/**************************************************/
+/*名称：cb_list_operation
+/*描述：好友/群组列表更新之后的回调函数
+/*作成日期： 2018-9-5
+/*参数：
+        参数1：更新结果, 1为成功, 0为失败
+/*返回值：类型为gboolean
+/*作者：zy
+/***************************************************/
 
 gboolean cb_list_operation(gpointer res){
 	if(res){
@@ -179,7 +280,16 @@ gboolean cb_list_operation(gpointer res){
 	}
 	return FALSE;
 }
-
+/**************************************************/
+/*名称：on_click_xxx_friend
+/*描述：点击添加/删除好友之后的回调函数
+/*作成日期： 2018-9-5
+/*参数：
+        参数1,2：事件默认参数
+	参数3  : 指向用户结构体的指针
+/*返回值：类型为gboolean
+/*作者：zy
+/***************************************************/
 void on_click_add_friend(GtkWidget* widget, GdkEvent* event, Entity* who){
 	req_add_contacts(myself->nickname, who->nickname, cb_list_operation);
 }
@@ -188,6 +298,16 @@ void on_click_del_friend(GtkWidget* widget, GdkEvent* event, Entity* who){
 	req_delete_contacts(myself->nickname, who->nickname, cb_list_operation);
 }
 
+/**************************************************/
+/*名称：cb_search_contacts
+/*描述：获取到用户搜索结果后的回调函数
+/*作成日期： 2018-9-5
+/*参数：
+        参数1：指针, 顺次指向一个int为记录条数, 随后是struct Entity数组
+/*返回值：类型为gboolean
+/*作者：zy
+/***************************************************/
+
 gboolean cb_search_contacts(gpointer data)
 {
 	int cnt = *(int*)data;
@@ -195,6 +315,16 @@ gboolean cb_search_contacts(gpointer data)
 	load_information(result_main_viewport, &result_show_box, list, cnt, on_click_add_friend);
 	return FALSE;
 }
+
+/**************************************************/
+/*名称：search_user/delete_user
+/*描述：点击好友操作后的响应函数
+/*作成日期： 2018-9-5
+/*参数：
+        参数1：指向输入框的指针
+/*返回值：类型为gboolean
+/*作者：zy
+/***************************************************/
 
 void search_user(GtkWidget* entry)
 {
