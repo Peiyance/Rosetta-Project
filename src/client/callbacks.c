@@ -165,6 +165,7 @@ gboolean cb_auth(gpointer data)
 		//success
 		gtk_widget_destroy(login_window);
 		myself = (Entity*) data;
+		sleep(0.3);
 		load_main_window();
 		req_contacts(myself->nickname, cb_contacts);		
 		req_groups(myself->nickname, cb_groups);
@@ -300,8 +301,8 @@ gboolean cb_list_operation(gpointer res){
 	return FALSE;
 }
 /**************************************************/
-/*名称：on_click_xxx_friend
-/*描述：点击添加/删除好友之后的回调函数
+/*名称：on_click_add/del_friend/group
+/*描述：点击添加/删除好友/Group之后的回调函数
 /*作成日期： 2018-9-5
 /*参数：
         参数1,2：事件默认参数
@@ -315,6 +316,14 @@ void on_click_add_friend(GtkWidget* widget, GdkEvent* event, Entity* who){
 
 void on_click_del_friend(GtkWidget* widget, GdkEvent* event, Entity* who){
 	req_delete_contacts(myself->nickname, who->nickname, cb_list_operation);
+}
+
+void on_click_add_group(GtkWidget* widget, GdkEvent* event, Entity* who){
+	// req_add_groups(myself-)
+}
+
+void on_click_del_group(GtkWidget* widget, GdkEvent* event, Entity* who){
+	// req_quit_group(who->nickname);
 }
 
 /**************************************************/
@@ -362,5 +371,42 @@ void delete_user(GtkWidget* entry)
         }
     }
     load_information(result_main_viewport, &result_show_box, list, cnt, on_click_del_friend);
+    free(list);
+}
+
+gboolean cb_search_groups(gpointer data)
+{
+	int cnt = *(int*)data;
+	Entity* list = (Entity*)(data+4);
+	load_information(result_main_viewport, &result_show_box, list, cnt, on_click_add_group);
+}
+
+/**************************************************/
+/*名称：search_user/delete_user
+/*描述：点击 Group 操作后的响应函数
+/*作成日期： 2018-9-6
+/*参数：
+        参数1：指向输入框的指针
+/*返回值：类型为gboolean
+/*作者：zy
+/***************************************************/
+
+void search_group(GtkWidget* entry)
+{
+	char* pattern = gtk_entry_get_text(entry);
+	// req_search_groups(pattern, cb_seach_groups);
+}
+
+void delete_group(GtkWidget* entry)
+{
+    char* pattern = gtk_entry_get_text(entry);
+    Entity* list = (Entity*)malloc(sizeof(Entity)*group_cnt);
+    int cnt = 0;
+    for(int i = 0; i < group_cnt; i++){
+	    if(strstr(grouplist[i].nickname, pattern)){
+	        list[cnt++] = grouplist[i];
+	    }
+	}
+	load_information(result_main_viewport, &result_show_box, list, cnt, on_click_del_group);
     free(list);
 }
