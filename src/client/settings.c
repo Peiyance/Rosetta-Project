@@ -14,7 +14,13 @@ void  load_setting_windows()
     GtkWidget *statusbar;
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
    // gtk_window_set_position(GTK_WINDOW(window),GTK_WIN_POS_CENTER);
-    gtk_window_set_default_size(GTK_WINDOW(window),250,200);
+    gtk_window_set_default_size(GTK_WINDOW(window),50,10);
+
+    GdkScreen *screen = gdk_screen_get_default();
+    gint screen_w = gdk_screen_get_width(screen);
+    gint screen_h = gdk_screen_get_height(screen);
+    
+    gtk_window_move(GTK_WINDOW(window), (screen_w/2), (screen_h/2));
     gtk_window_set_title(GTK_WINDOW(window),"friends_groups_settings statusbar");
     //===========主分割======
     vbox = gtk_vbox_new(FALSE,0);
@@ -24,7 +30,7 @@ void  load_setting_windows()
     
     GtkWidget *menu_friend_groups_settings = gtk_menu_new();
     GtkWidget *friends_groups_settings = gtk_menu_item_new_with_label("好友/群设置");
-        gtk_menu_item_set_submenu(GTK_MENU_ITEM(friends_groups_settings),menu_friend_groups_settings);
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(friends_groups_settings),menu_friend_groups_settings);
     
     GtkWidget *add_new_friend = gtk_menu_item_new_with_label("添加好友");
          gtk_menu_shell_append(GTK_MENU_SHELL(menu_friend_groups_settings),add_new_friend);
