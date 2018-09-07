@@ -52,18 +52,30 @@ void deal_button(GtkWidget *w, gpointer data)
     screenshot(GTK_WIDGET(data), 0, 0, 300, 300, "./shoot/save.png");
 }
 
+void cb_openfile(GtkWidget* trigger, gint response_id, gpointer data)
+{
+    if(response_id == -5){
+        printf("Triggered File Sent: [path]=%s\n[username]:%s\n", data);
+        File_private(gtk_file_selection_get_filename(trigger), data);
+    }
+    gtk_widget_destroy(trigger);    
+}
+
 /********************************************************************************
  * Name          : button_openfile
  * Description   : to open the file window
  * Date:         : 2018.09.07
  * Author        : zhouzhi
  ********************************************************************************/
+
 void button_openfile (GtkWidget * widget, gpointer * data)
 {
     GtkWidget *FileSelection;
     FileSelection = gtk_file_selection_new ("选择文件");    /*创建文件选择构件 */
     gtk_file_selection_set_filename (GTK_FILE_SELECTION (FileSelection),"*.jpg *.png *.bmp");
+    g_signal_connect(G_OBJECT(FileSelection), "response", G_CALLBACK(cb_openfile), data);
     gtk_widget_show (FileSelection);
+    // printf("filename: %s", gtk_file_selection_get_filename(FileSelection));
 }
 
 /********************************************************************************
@@ -136,6 +148,7 @@ void load_chat_personal_window(Entity* who)
 {
     int id = get_friend_local_id(who->nickname);
     chatting_with = who;
+    printf("chat to %s\n, chatting_with->nickname");
     GtkWidget *main_box;
     GtkWidget *friend_information_box;
     GtkWidget *friend_table;
@@ -215,7 +228,7 @@ void load_chat_personal_window(Entity* who)
 
     file_button = sungtk_button_new_with_image("./imgs/IMBigToolbarSendFile.ico", 0, 0);
     gtk_box_pack_start(GTK_BOX(under_tool_box),file_button,FALSE,FALSE,5);
-	g_signal_connect (G_OBJECT (file_button), "clicked", G_CALLBACK (button_openfile), (gpointer) "打开");
+	g_signal_connect (G_OBJECT (file_button), "clicked", G_CALLBACK (button_openfile), who->nickname);
 
 	cutting_button = sungtk_button_new_with_image("./imgs/IMSmallToolbarPicture.ico", 0, 0);
     gtk_box_pack_start(GTK_BOX(under_tool_box),cutting_button,FALSE,FALSE,5);
