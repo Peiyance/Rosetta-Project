@@ -883,7 +883,7 @@ int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char
         else
         {
             *p_to_sockfd=0;
-            strcpy(p_msg_to_slef,"-1");
+            strcpy(p_msg_to_slef,"/0-1");
         }
     }
     else if(original_msg[1]=='1')                //sign up
@@ -891,7 +891,7 @@ int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char
         if(check_signup(original_msg+3))          //sign up success
         {
             *p_to_sockfd='\0';
-            strcpy(p_msg_to_slef,"1");
+            strcpy(p_msg_to_slef,"/10");
             for(i=0;i<80&&original_msg[i+12]!=';';i++)
                 self_name[i]=original_msg[i+12];
             self_name[i]='\0';
@@ -907,7 +907,7 @@ int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char
         else
         {
             *p_to_sockfd=0;
-            strcpy(p_msg_to_slef,"0");
+            strcpy(p_msg_to_slef,"/1-1");
         }
     }
     else if(original_msg[1]=='2')                //get friend list
@@ -934,7 +934,7 @@ printf("--------%s\n",temp);
     }
     else if(original_msg[1]=='3')                //add friend
     {
-        if(original_msg[3]=='0')
+        /*if(original_msg[3]=='0')
         {
             strcpy(opp_name,original_msg+4);
             len = strlen(opp_name);
@@ -1002,9 +1002,9 @@ printf("--------%s\n",temp);
             
         }
         else if(original_msg[3]=='3')
-        {}
-        else
-        {
+        {}*/
+       // else
+       // {
 		
             strcpy(opp_name,original_msg+3);
             len=strlen(opp_name);
@@ -1035,7 +1035,7 @@ printf("jinmeijin\n");
 strcat(p_msg_to_opp,opp_name);
                 strcat(p_msg_to_opp,"*");
           //  }
-        }
+       // }
     }
     else if(original_msg[1]=='4')                //get offline msg
     {
@@ -1181,15 +1181,15 @@ int process_msg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_m
         for(i=0;i<100&&original_msg[i]!=':';i++)
             opp_name[i]=original_msg[i];
         opp_name[i]='\0';
- /*       char sour_name[100];
+       char sour_name[100];
 i++;
 int jj=i;
 for(;jj<100&&original_msg[jj]!=':';jj++)
 	{
 	sour_name[jj-i]=original_msg[jj];
 	}
-	sour_name[jj]='\0';
-	printf("!!!!!!!!!!!!%s",sour_name);*/
+	sour_name[jj-i]='\0';
+	printf("!!!!!!!!!!!!%s\n",sour_name);
         if(if_user_exist(opp_name)==0)
         {
             strcpy(p_msg_to_slef,"User not exist\n");
@@ -1230,9 +1230,9 @@ for(;jj<100&&original_msg[jj]!=':';jj++)
                 *p_to_sockfd=ary_sockfd[opp_userID];
                 printf("^^^^^^%d\n",opp_userID);
               //  strcpy(p_msg_to_opp,online_user[current_userID]);
-		//strcpy(p_msg_to_opp,opp_name);
-                //strcat(p_msg_to_opp,":");
-                len=strlen(opp_name)+1;
+		strcpy(p_msg_to_opp,sour_name);
+                strcat(p_msg_to_opp,":");
+                len=strlen(opp_name)+strlen(sour_name)+2;
                 strcat(p_msg_to_opp,original_msg+len);
                 
                 strcpy(p_msg_to_slef,"get\n");
@@ -1357,10 +1357,11 @@ int process_gmsg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_
            // else
            // {
                 
-	for(int i=0;i<=opp_userID;i++)
+	for(int i=0;i<=1;i++)
 	{	 
-		if(i == current_userID)	continue;		
-		printf("%d\n", opp_userID);
+		//opp_userID=if_user_online(opp_names[i]);
+		//if(i == current_userID)	continue;		
+		printf("%d oppuserID\n", opp_userID);
                // printf("%s\n", original_msg);
                 *p_to_sockfd=ary_sockfd[i];
 
@@ -1660,15 +1661,15 @@ int cnt=0;
         }*/
         userNum++;
 		//("ttee\n");
-        //pthread_create(&ptid[userNum],NULL,_pthread_entrance(&try),NULL);
-	switch(fork()){
+        pthread_create(&ptid[userNum],NULL,_pthread_entrance,&try);
+	/*switch(fork()){
 		case 0:
 			(*_pthread_entrance)(&try);
 			break;
 		case -1:
 			printf("error");
 			break;
-	}
+	}*/
 printf("ttee\n");
 	fflush(stdout);
         //close(listen_sockfd);
