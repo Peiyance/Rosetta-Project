@@ -37,15 +37,6 @@ char online_user[MAX_USER_NUM][10];
 int  ary_sockfd[MAX_USER_NUM];                         //arrar for clients' sockfd
 int global_current_sockfd;
 
-struct Package
-{
-    int package_sequence;
-    int ver;
-    int len;
-    char payload[0];
-};
-
-
 /********************************************************************************
  * Description : 用于处理收到的命令，只处理，不发送
  * Prameter    : (1)指向对面用户 sockfd 的指针，不向对面发送消息的时候赋值为0
