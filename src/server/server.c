@@ -18,24 +18,601 @@
 #include<pthread.h>
 #include<sys/shm.h>
 #include<time.h>
-#include"server.c"
-#ifndef database_h
-#define database_h
-#endif
-
+#include"database.h"
+//#include<gtk/gtk.h>
 #define MYPORT    10005                          //server's listen port
 #define PORT      8081                          //the begin of srever's chat port
 #define CLPORT    8079                          //client's chat port
 #define MYKEY   12345
 #define SIZE    10240
 #define MAX_USER_NUM 10
-int client_sockfd;
+//int client_sockfd;
 int _2_server_sockfd;
 int userNum;
 char online_user[MAX_USER_NUM][10];
 int  ary_sockfd[MAX_USER_NUM];                         //arrar for clients' sockfd
 int global_current_sockfd;
 
+struct Package
+{
+    int package_sequence;
+    int ver;
+    int len;
+    char payload[0];
+};
+
+/********************************************************************************
+ Description : sign up in database
+ Prameter    : Function is not completed.
+ Return      : int (1 == success, 0 == failed)
+ Side effect :
+ Author      : zpy
+ Date        : 2018.9.2
+ ********************************************************************************/
+int check_signup(const char* line)
+{
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    //making connection
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+    {
+        fprintf(stderr, "%s\n", mysql_error(conn));
+        exit(1);
+    }
+    
+    //get name and password
+    char user_name[20];
+    char user_pw[20];
+    int i =9,j=0;
+    while (line[i]&&line[i]!=';')
+    {
+        user_name[j]=line[i];
+        i++; j++;
+    }
+    user_name[j]=0;
+    i+=10; j=0;
+    while (line[i]&&line[i]!=';')
+    {
+        user_pw[j]=line[i];
+        i++; j++;
+    }
+    user_pw[j]=0;
+    
+    //check if the username exit
+    char comm[1024];
+    int ans=0;
+    sprintf(comm,"select * from alluser where username = '%s';",user_name);
+    if (mysql_query(conn,comm))
+    {
+        fprintf(stderr, "%s\n", mysql_error(conn));
+        exit(1);
+    }
+    res = mysql_use_result(conn);
+    while ((row = mysql_fetch_row(res)) != NULL)
+    {
+        ans++;                            //remember the output number!!
+    }
+    if(ans!=0)                            //if user_name exist!
+    {
+        //printf("username exist!\n");
+        mysql_free_result(res);
+        mysql_close(conn);
+        return 0;
+    }
+    else  //start insertion
+    {
+        char comm1[1024] ="\0";
+        sprintf(comm1,"insert into alluser values ('%s','%s');",user_name,user_pw);
+        if (mysql_query(conn,comm1))
+        {
+            fprintf(stderr, "%s\n", mysql_error(conn));
+            //exit(1);
+        }
+        char comm2[1024]="\0";
+        sprintf(comm2,"insert into avator values ('%s',0)",user_name);
+        if (mysql_query(conn,comm2));
+        {
+            fprintf(stderr, "%s\n", mysql_error(conn));
+            //exit(1);
+        }
+        mysql_free_result(res);
+        mysql_close(conn);
+        return 1;
+    }
+}
+
+/********************************************************************************
+ Description : login in database
+ Parameter    : Function is not completed.
+ Return      : int (1 == success, 0 == failed)
+ Side effect :
+ Author      : zpy
+ Date        : 2018.9.2
+ ********************************************************************************/
+int check_login(const char* line)
+{
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+    {
+        //fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    
+    //get name and password
+    char user_name[20];
+    char user_pw[20];
+    int i=9,j=0;
+    while (line[i]&&line[i]!=';')
+    {
+        user_name[j]=line[i];
+        i++; j++;
+    }
+    user_name[j]=0;
+    i+=10; j=0;
+    while (line[i]&&line[i]!=';')
+    {
+        user_pw[j]=line[i];
+        i++; j++;
+    }
+    user_pw[j]=0;
+    
+    //select data
+    char comm[1024]="\0";
+    int ans=0;
+    sprintf(comm,"select * from alluser where username = '%s' and password = '%s';",
+            user_name,user_pw);
+    if (mysql_query(conn,comm))
+    {
+        ///fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    res = mysql_use_result(conn);
+    while ((row = mysql_fetch_row(res)) != NULL)
+    {
+        ans++;
+        //printf("%s %s\n", row[0],row[1]); //remember the output number!!
+    }
+    if(ans==0)
+    {
+        mysql_free_result(res);
+        mysql_close(conn);
+        return 0;
+    }
+    
+    //ending
+    mysql_free_result(res);
+    mysql_close(conn);
+    return 1;
+}
+
+/********************************************************************************
+ Description : check if the user exist
+ Prameter    : Function done
+ Return      : int (0=no,1=exist)
+ Side effect : none
+ Author      : zpy
+ Date        : 2018.9.2
+ ********************************************************************************/
+int if_user_exist(const char* line)
+{
+    //making connection
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+    {
+        //fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    
+    //start deletion
+    char comm[1024] ="\0";
+    sprintf(comm,"select * from alluser where username = '%s';",line);
+    if (mysql_query(conn,comm))
+    {
+        //fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    int ans=0;
+    res = mysql_use_result(conn);
+    while ((row = mysql_fetch_row(res)) != NULL)
+    {
+        ans++;
+        //printf("%s %s\n", row[0],row[1]); //remember the output number!!
+    }
+    if(ans==0)
+    {
+        mysql_free_result(res);
+        mysql_close(conn);
+        return 0;
+    }
+    
+    //ending
+    mysql_free_result(res);
+    mysql_close(conn);
+    return 1;
+}
+
+/********************************************************************************
+ Description : check if the group exist
+ Prameter    : Function done
+ Return      : int (0=no,1=exist)
+ Side effect : none
+ Author      : zpy
+ Date        : 2018.9.3
+ ********************************************************************************/
+int if_group_exist(const char* line)
+{
+    //making connection
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+    {
+        //fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    
+    //start deletion
+    char comm[1024] ="\0";
+    sprintf(comm,"select * from allgroup where groupname = '%s';",line);
+    
+    if (mysql_query(conn,comm))
+    {
+        //fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    int ans=0;
+    res = mysql_use_result(conn);
+    while ((row = mysql_fetch_row(res)) != NULL)
+    {
+        ans++;
+        //printf("%s %s\n", row[0],row[1]); //remember the output number!!
+    }
+    if(ans==0)
+    {
+        mysql_free_result(res);
+        mysql_close(conn);
+        return 0;
+    }
+    
+    //ending
+    mysql_free_result(res);
+    mysql_close(conn);
+    return 1;
+}
+
+
+/********************************************************************************
+ Description : search avator from db
+ Prameter    : Function done
+ Return      : int (numbers of avator)        considering
+ Side effect : none
+ Author      : zpy
+ Date        : 2018.9.3
+ ********************************************************************************/
+int search_avator_from_db(const char* username)
+{
+    //making connection
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+    {
+        //fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    
+    //start deletion
+    char comm[1024] ="\0";
+    sprintf(comm,"select number from avator where username = '%s';",username);
+    if (mysql_query(conn,comm))
+    {
+        //fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    int ans;
+    res = mysql_use_result(conn);
+    while ((row = mysql_fetch_row(res)) != NULL)
+    {
+        ans = atoi(row[0]);
+        //printf("%s %s\n", row[0],row[1]); //remember the output number!!
+    }
+    mysql_free_result(res);
+    mysql_close(conn);
+    return ans;
+}
+
+/********************************************************************************
+ Description : change default avator in db
+ Prameter    : Function done           can be expanded
+ Return      : void
+ Side effect : none
+ Author      : zpy
+ Date        : 2018.9.3
+ ********************************************************************************/
+void change_avator_in_db(const char* username,int id)
+{
+    //making connection
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+    {
+        //fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    
+    //start deletion
+    char comm[1024] ="\0";
+    sprintf(comm,"update avator set number = %d where username = '%s';",id,username);
+    if (mysql_query(conn,comm))
+    {
+        //fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    mysql_close(conn);
+    return;
+}
+
+/********************************************************************************
+ Description : add friend in database
+ Prameter    : Function done
+ Return      : void
+ Side effect : none
+ Author      : zpy
+ Date        : 2018.9.2
+ ********************************************************************************/
+void insert_friend_into_database(const char* name1,const char* name2)
+{
+    //making connection
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+    {
+        // fprintf(stderr, "%s\n", mysql_error(conn));
+        // exit(1);
+    }
+    
+    //check if the username exit
+    char comm[1024];
+    int ans=0;
+    sprintf(comm,"select * from friend_list where p1 = '%s' and p2 = '%s';",name1,name2);
+    if (mysql_query(conn,comm))
+    {
+        // fprintf(stderr, "%s\n", mysql_error(conn));
+        // exit(1);
+    }
+    res = mysql_use_result(conn);
+    while ((row = mysql_fetch_row(res)) != NULL)
+    {
+        //printf("%s %s\n", row[0],row[1]); //remember the output number!!
+        ans++;
+    }
+    if(ans!=0)                            //if user_name exist!
+    {
+        mysql_free_result(res);
+        mysql_close(conn);
+        return ;
+    }
+    else  //start insertion
+    {
+        char comm1[1024] ="\0";
+        sprintf(comm1,"insert into friend_list values ('%s','%s');",name1,name2);
+        if (mysql_query(conn,comm1))
+        {
+            //fprintf(stderr, "%s\n", mysql_error(conn));
+            //exit(1);
+        }
+        char comm2[1024] ="\0";
+        sprintf(comm2,"insert into friend_list values ('%s','%s');",name2,name1);
+        if (mysql_query(conn,comm2))
+        {
+            // fprintf(stderr, "%s\n", mysql_error(conn));
+            //exit(1);
+        }
+    }
+    mysql_free_result(res);
+    mysql_close(conn);
+    return;
+}
+
+
+
+
+/*int get_friend_list_from_db(const char* name,char* list)
+ {
+ //making connection
+ MYSQL *conn;
+ MYSQL_RES *res;
+ MYSQL_ROW row;
+ conn = mysql_init(NULL);
+ if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+ {
+ // fprintf(stderr, "%s\n", mysql_error(conn));
+ //exit(1);
+ }
+ 
+ //check if the username exit
+ char comm[1024]="\0",line[2000]="\0";
+ //memset(line,0,sizeof(line));
+ int ans=0;
+ sprintf(comm,"select p2 from friend_list where p1 = '%s';",name);
+ if (mysql_query(conn,comm))
+ {
+ //fprintf(stderr, "%s\n", mysql_error(conn));
+ //exit(1);
+ }
+ res = mysql_use_result(conn);
+ while ((row = mysql_fetch_row(res)) != NULL)
+ {
+ //printf("%s\n", row[0]); //remember the output number!!
+ ans++;
+ strcat(line,row[0]);
+ strcat(line,"\n");
+ }
+ //strcat(line,0);
+ strcpy(list,line);
+ mysql_free_result(res);
+ mysql_close(conn);
+ return ans;
+ }*/
+
+/********************************************************************************
+ Description : get group users from db
+ Prameter    : Function done
+ Return      : int(number of group members)
+ Side effect : none
+ Author      : zpy
+ Date        : 2018.9.2
+ ********************************************************************************/
+int get_group_users_from_db(const char* groupname, char list[][100])
+{
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+    {
+        // fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    
+    char comm[1024]="\0",line[2000]="\0";
+    //memset(line,0,
+    int ans=0;
+    
+    sprintf(comm,"select username from alluser a, group_list g where g.p2 = 'g1' and g.p1 = a.username ;",groupname);
+    
+    if (mysql_query(conn,comm))
+    {
+        //fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    res = mysql_use_result(conn);
+    while ((row = mysql_fetch_row(res)) != NULL)
+    {
+        //printf("%s %s\n", row[0]); //remember the output number!!
+        ans++;
+        strcpy(list[ans-1],row[0]);
+    }
+    //strcat(line,0);
+    //strcpy(list,line);
+    mysql_free_result(res);
+    mysql_close(conn);
+    return ans;
+}
+
+/********************************************************************************
+ Description : get friend list from db
+ Prameter    : Function done
+ Return      : int (number of friends)
+ Side effect : none
+ Author      : zpy
+ Date        : 2018.9.2
+ ********************************************************************************/
+int get_friend_list_from_db(const char* name,char* list)
+{
+    //making connection
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+    {
+        // fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    
+    //check if the username exit
+    char comm[1024]="\0",line[2000]="\0";
+    //memset(line,0,sizeof(line));
+    int ans=0;
+    sprintf(comm,"select friend_list.p2,avator.number from friend_list,avator where friend_list.p2=avator.username and p1 = '%s';",name);
+    if (mysql_query(conn,comm))
+    {
+        //fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    res = mysql_use_result(conn);
+    while ((row = mysql_fetch_row(res)) != NULL)
+    {
+        //printf("%s %s\n", row[0]); //remember the output number!!
+        ans++;
+        strcat(line,row[0]);
+        strcat(line," ");
+        strcat(line,row[1]);
+        strcat(line," ");
+        //strcat(line,row[2]);
+        //strcat(line," ");
+
+    }
+    //strcat(line,0);
+    strcpy(list,line);
+    mysql_free_result(res);
+    mysql_close(conn);
+    return ans;
+}
+
+/********************************************************************************
+ Description : get group list from db
+ Prameter    : Function done
+ Return      : int (number of groups)
+ Side effect : none
+ Author      : zpy
+ Date        : 2018.9.3
+ ********************************************************************************/
+int get_group_list_from_db(const char* name,char* list)
+{
+    //making connection
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+    {
+        // fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    
+    //check if the username exit
+    char comm[1024]="\0",line[2000]="\0";
+    //memset(line,0,sizeof(line));
+    int ans=0;
+    sprintf(comm,"select group_list.p2, group_avator.number from group_list, group_avator where group_list.p2=group_avator.groupname and group_list.p1 = '%s';",name);
+    if (mysql_query(conn,comm))
+    {
+        //fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    res = mysql_use_result(conn);
+    while ((row = mysql_fetch_row(res)) != NULL)
+    {
+        //printf("%s %s\n", row[0]); //remember the output number!!
+        ans++;
+        strcat(line,row[0]);
+        strcat(line,"\n");
+        strcat(line,row[1]);
+        strcat(line,"\n");
+    }
+    //strcat(line,0);
+    strcpy(list,line);
+    mysql_free_result(res);
+    mysql_close(conn);
+    return ans;
+}
 
 /********************************************************************************
  Description : search user from db
@@ -102,6 +679,120 @@ void itoa(int n,char*str)
     str[3]=n%10+'0';
     str[4]=0;
 }
+
+void create_group_into_database(const char* name1,const char* name2)
+{
+    //making connection
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+    {
+        // fprintf(stderr, "%s\n", mysql_error(conn));
+        // exit(1);
+    }
+    
+    //check if the username exit
+    //char comm[1024];
+    int ans=0;
+   // sprintf(comm,"select * from friend_list where p1 = '%s' and p2 = '%s';",name1,name2);
+   // if (mysql_query(conn,comm))
+   // {
+        // fprintf(stderr, "%s\n", mysql_error(conn));
+        // exit(1);
+   // }
+   // res = mysql_use_result(conn);
+   // while ((row = mysql_fetch_row(res)) != NULL)
+   // {
+        //printf("%s %s\n", row[0],row[1]); //remember the output number!!
+    //    ans++;
+   // }
+   // if(ans!=0)                            //if user_name exist!
+    //{
+    //    mysql_free_result(res);
+    //    mysql_close(conn);
+    //    return ;
+   // }
+   // else  //start insertion
+   // {
+        char comm1[1024] ="\0";
+        sprintf(comm1,"insert into group_list values ('%s','%s');",name1,name2);
+        if (mysql_query(conn,comm1))
+        {
+            //fprintf(stderr, "%s\n", mysql_error(conn));
+            //exit(1);
+        }
+        char comm2[1024] ="\0";
+        sprintf(comm2,"insert into allgroup values ('%s');",name2);
+        if (mysql_query(conn,comm2))
+        {
+            // fprintf(stderr, "%s\n", mysql_error(conn));
+            //exit(1);
+        }
+   // }
+   // mysql_free_result(res);
+    mysql_close(conn);
+    return;
+}
+
+void quit_group_into_database(const char* name1,const char* name2)
+{
+    //making connection
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+    {
+        // fprintf(stderr, "%s\n", mysql_error(conn));
+        // exit(1);
+    }
+    
+    //check if the username exit
+    //char comm[1024];
+    int ans=0;
+    // sprintf(comm,"select * from friend_list where p1 = '%s' and p2 = '%s';",name1,name2);
+    // if (mysql_query(conn,comm))
+    // {
+    // fprintf(stderr, "%s\n", mysql_error(conn));
+    // exit(1);
+    // }
+    // res = mysql_use_result(conn);
+    // while ((row = mysql_fetch_row(res)) != NULL)
+    // {
+    //printf("%s %s\n", row[0],row[1]); //remember the output number!!
+    //    ans++;
+    // }
+    // if(ans!=0)                            //if user_name exist!
+    //{
+    //    mysql_free_result(res);
+    //    mysql_close(conn);
+    //    return ;
+    // }
+    // else  //start insertion
+    // {
+    char comm1[1024] ="\0";
+    sprintf(comm1,"delete from group_list where p1='%s';",name1);
+    if (mysql_query(conn,comm1))
+    {
+        //fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    /*char comm2[1024] ="\0";
+    sprintf(comm2,"insert into allgroup values ('%s');",name2);
+    if (mysql_query(conn,comm2))
+    {
+        // fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }*/
+    // }
+    // mysql_free_result(res);
+    mysql_close(conn);
+    return;
+}
+
+
 /********************************************************************************
  * Description : ；判断用户是否在线
  * Prameter    : char*,the name which you want to check
@@ -115,8 +806,11 @@ int if_user_online(const char *name)
 {
     int i;
     for(i=0;i<MAX_USER_NUM;i++)
-        if(strcmp(online_user[i],name)==0)
+        {
+	if(strcmp(online_user[i],name)==0)
             break;
+printf("___+++++____%s\n",online_user[i]);
+	}	
     if(i==MAX_USER_NUM)
         return -1;
     return i;
@@ -140,7 +834,8 @@ int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char
     char self_name[100];
     char msg_to_opp[100];
     char temp[100];
-    char temp1[100];                             //  using in case '2'
+    char temp1[100];
+    char temp2[100];//  using in case '2'
     int i;
     int opp_userID;
     int len;
@@ -152,17 +847,38 @@ int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char
     printf("!!!!!!!!!!\n");
     if(original_msg[1]=='0')                     //log in
     {
+        printf("~\n");
         if(check_login(original_msg+3))                   //log in success
         {
             *p_to_sockfd=0;
-            strcpy(p_msg_to_slef,"0");
-            
+            strcpy(p_msg_to_slef,"/0");
+            int gt;
+            char lin[100];
+            int i=12;
+            int j=0;
+            while (original_msg[i]&&original_msg[i]!=';')
+            {
+                lin[j]=original_msg[i];
+                i++; j++;
+            }
+            printf("Are you OK!\n");
+            lin[j]='\0';
+            gt=search_avator_from_db(lin);
+            char gt1[1];
+            gt1[0]=gt+'0';
+            printf("%c\n",gt1);
+            printf("Are you OK!\n");
+            strcat(p_msg_to_slef,lin);
+            printf("%s\n",p_msg_to_slef);
+            strcat(p_msg_to_slef," ");
+            strcat(p_msg_to_slef,gt1);
+            printf("Are you OK!\n");
             for(i=0;i<80&&original_msg[i+12]!=';';i++)                         //add name into online_user
                 self_name[i]=original_msg[i+12];
             self_name[i]=0;
             strcpy(online_user[current_userID],self_name);
             
-            printf("%s had log in\n",self_name);
+            printf("%s had log in %d \n",self_name,current_userID);
         }
         else
         {
@@ -174,23 +890,24 @@ int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char
     {
         if(check_signup(original_msg+3))          //sign up success
         {
-            *p_to_sockfd=0;
-            strcpy(p_msg_to_slef,"0");
+            *p_to_sockfd='\0';
+            strcpy(p_msg_to_slef,"1");
             for(i=0;i<80&&original_msg[i+12]!=';';i++)
                 self_name[i]=original_msg[i+12];
-            self_name[i]=0;
+            self_name[i]='\0';
             
             strcpy(temp,"offline_msg/");
             strcat(temp,self_name);
-            p_offline_msg=fopen(temp,"w");
-            fclose(p_offline_msg);
+          // p_offline_msg=fopen("p_offline_mgs","w");
+          // fprintf(p_offline_msg,"%s\n",p_msg_to_opp);
+          // fclose(p_offline_msg);
             
             printf("%s sign up\n",self_name);
         }
         else
         {
             *p_to_sockfd=0;
-            strcpy(p_msg_to_slef,"-1");
+            strcpy(p_msg_to_slef,"0");
         }
     }
     else if(original_msg[1]=='2')                //get friend list
@@ -200,13 +917,15 @@ int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char
         strcpy(temp,original_msg+3);
         len=strlen(temp);
         temp[len-1]=0;
+printf("--------%s\n",temp);
         friend_num = get_friend_list_from_db(temp,temp1);
         
-        
+        printf("-----%d\n",friend_num);
         strcpy(p_msg_to_slef,"/2* ");
         
-        itoa(friend_num,temp);
-        strcat(p_msg_to_slef,temp);
+        
+        itoa(friend_num,temp2);
+        strcat(p_msg_to_slef,temp2);
         
         strcat(p_msg_to_slef," ");
         strcat(p_msg_to_slef,temp1);
@@ -227,14 +946,14 @@ int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char
                 
                 strcpy(temp,"offline_msg/");
                 strcat(temp,opp_name);
-                p_offline_msg=fopen(temp,"a");
+            //    p_offline_msg=fopen(temp,"a");
                 
                 strcpy(p_msg_to_opp,"/3:2,");
                 strcat(p_msg_to_opp,online_user[current_userID]);
                 strcat(p_msg_to_opp,"*");
-                fprintf(p_offline_msg,"%s\n",p_msg_to_opp);
+             //   fprintf(p_offline_msg,"%s\n",p_msg_to_opp);
                 
-                fclose(p_offline_msg);
+               // fclose(p_offline_msg);
             }
             else
             {
@@ -260,14 +979,14 @@ int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char
                 
                 strcpy(temp,"offline_msg/");
                 strcat(temp,opp_name);
-                p_offline_msg=fopen(temp,"a");
+              //  p_offline_msg=fopen(temp,"a");
                 
                 strcpy(p_msg_to_opp,"/3:3,");
                 strcat(p_msg_to_opp,online_user[current_userID]);
                 strcat(p_msg_to_opp,"*");
-                fprintf(p_offline_msg,"%s\n",p_msg_to_opp);
+              //  fprintf(p_offline_msg,"%s\n",p_msg_to_opp);
                 
-                fclose(p_offline_msg);
+              //  fclose(p_offline_msg);
             }
             else
             {
@@ -286,32 +1005,36 @@ int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char
         {}
         else
         {
+		
             strcpy(opp_name,original_msg+3);
             len=strlen(opp_name);
             opp_name[len-1]=0;
-            if((opp_userID=if_user_online(opp_name))==-1)         //Friend not online
+	printf("%s\n",opp_name);
+            /*if((opp_userID=if_user_online(opp_name))==-1)         //Friend not online
             {
                 *p_msg_to_opp=0;
                 
                 strcpy(temp,"offline_msg/");
                 strcat(temp,opp_name);
-                p_offline_msg=fopen(temp,"a");
+         //       p_offline_msg=fopen(temp,"a");
                 
                 strcpy(p_msg_to_opp,"/3:");
                 strcat(p_msg_to_opp,online_user[current_userID]);
                 strcat(p_msg_to_opp,"*");
                 
-                fprintf(p_offline_msg,"%s\n",p_msg_to_opp);
-                fclose(p_offline_msg);
-            }
-            else
-            {
+           //     fprintf(p_offline_msg,"%s\n",p_msg_to_opp);
+             //   fclose(p_offline_msg);
+            }*/
+            //else
+           // {
+printf("jinmeijin\n");
                 *p_to_sockfd=ary_sockfd[opp_userID];
                 
                 strcpy(p_msg_to_opp,"/3:");
-                strcat(p_msg_to_opp,online_user[current_userID]);
+               // strcat(p_msg_to_opp,online_user[current_userID]);
+strcat(p_msg_to_opp,opp_name);
                 strcat(p_msg_to_opp,"*");
-            }
+          //  }
         }
     }
     else if(original_msg[1]=='4')                //get offline msg
@@ -347,8 +1070,8 @@ int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char
         
         strcpy(p_msg_to_slef,"/5* ");
         
-        itoa(friend_num,temp);
-        strcat(p_msg_to_slef,temp);
+        itoa(friend_num,temp2);
+        strcat(p_msg_to_slef,temp2);
         
         strcat(p_msg_to_slef," ");
         strcat(p_msg_to_slef,temp1);
@@ -382,18 +1105,58 @@ int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char
         temp[len-1]=0;
         group_num = get_group_list_from_db(temp,temp1);
         
-        strcpy(p_msg_to_slef,"/4* ");
+        strcpy(p_msg_to_slef,"/9* ");
         
-        itoa(group_num,temp);
-        strcat(p_msg_to_slef,temp);
+        itoa(group_num,temp2);
+        strcat(p_msg_to_slef,temp2);
         
         strcat(p_msg_to_slef," ");
         strcat(p_msg_to_slef,temp1);
         
         printf("%s",temp1);
     }
-}
 
+	else if(original_msg[1]=='b')
+    {
+        *p_to_sockfd=0;
+        //char *friend_list[10];
+        int kk;
+        for(kk=2;kk<strlen(original_msg)&&original_msg[kk]!=':';kk++)
+        {
+            temp[kk-2]=original_msg[kk];
+        }
+        kk++;
+        *p_msg_to_slef=0;
+        int gg=kk;
+        for(;gg<strlen(original_msg)&&original_msg[gg]!='*';gg++)
+        {
+            temp1[gg-kk]=original_msg[gg];
+        }
+    
+        
+        create_group_into_database(temp,temp1);
+    }
+    else if(original_msg[1]=='q')
+    {
+        *p_to_sockfd=0;
+        //char *friend_list[10];
+        int kk;
+        for(kk=2;kk<strlen(original_msg)&&original_msg[kk]!=':';kk++)
+        {
+            temp[kk-2]=original_msg[kk];
+        }
+        kk++;
+        *p_msg_to_slef=0;
+        int gg=kk;
+        for(;gg<strlen(original_msg)&&original_msg[gg]!='*';gg++)
+        {
+            temp1[gg-kk]=original_msg[gg];
+        }
+        
+        
+        quit_group_into_database(temp,temp1);
+    }
+}
 /********************************************************************************
  * Description : 用于处理收到的消息，只处理，不发送
  * Prameter    : 参考 process_command
@@ -402,7 +1165,7 @@ int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char
  * Author      : zpy
  * Date        : 2018.9.2
  ********************************************************************************/
-int process_msg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_msg_to_opp,const char*original_msg)
+int process_msg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_msg_to_opp,const char* original_msg)
 {
     char opp_name[100];
     char msg_to_opp[100];
@@ -413,24 +1176,80 @@ int process_msg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_m
     FILE* p_offline_msg=NULL;
     
     printf("%s\n",original_msg);                           // delete later;
-    for(i=0;i<100&&original_msg[i]!=',';i++)
-        opp_name[i]=original_msg[i];
-    opp_name[i]='\0';
-    
-    if(if_user_exist(opp_name)==0)
-    {
-        strcpy(p_msg_to_slef,"User not exist\n");
-        *p_msg_to_opp=0;
-        printf("%s\n",p_msg_to_slef);
-        printf("%s\n",original_msg);
-        return 0;
-    }
-    else
+    if(original_msg[0]!='*')
     {
         for(i=0;i<100&&original_msg[i]!=':';i++)
             opp_name[i]=original_msg[i];
-        opp_name[i]=0;
+        opp_name[i]='\0';
+ /*       char sour_name[100];
+i++;
+int jj=i;
+for(;jj<100&&original_msg[jj]!=':';jj++)
+	{
+	sour_name[jj-i]=original_msg[jj];
+	}
+	sour_name[jj]='\0';
+	printf("!!!!!!!!!!!!%s",sour_name);*/
+        if(if_user_exist(opp_name)==0)
+        {
+            strcpy(p_msg_to_slef,"User not exist\n");
+            *p_msg_to_opp=0;
+            printf("%s\n",p_msg_to_slef);
+            printf("%s\n",original_msg);
+            return 0;
+        }
+        else
+        {
+		printf("%s opp_name\n",opp_name);
+		//opp_userID=if_user_online(opp_name);
+		opp_userID =!current_userID;
+		printf("&&&&&&&&&&&%d\n",opp_userID);
+           //for(i=0;i<100&&original_msg[i]!=':';i++)
+           //     opp_name[i]=original_msg[i];
+           // opp_name[i]='\0';
+            
+           /* if((opp_userID=if_user_online(opp_name))==-1)         //Friend not online
+            {
+                strcpy(p_msg_to_slef,"User not online\n");
+              //  *p_msg_to_opp=0;
+                
+                strcpy(temp,"offline_msg/");
+                strcat(temp,opp_name);
+    //            p_offline_msg=fopen(temp,"a");
+                
+                //strcpy(p_msg_to_opp,online_user[current_userID]);
+                strcat(p_msg_to_opp,":");
+                /*len=strlen(online_user[current_userID])+1;
+                strcat(p_msg_to_opp,original_msg+len);*/
+               // printf("%s\n",p_msg_to_opp);
+      //          fprintf(p_offline_msg,"%s\n",p_msg_to_opp);
+        //        fclose(p_offline_msg);
+            //}*/
+            //else
+           // {
+                *p_to_sockfd=ary_sockfd[opp_userID];
+                printf("^^^^^^%d\n",opp_userID);
+              //  strcpy(p_msg_to_opp,online_user[current_userID]);
+		//strcpy(p_msg_to_opp,opp_name);
+                //strcat(p_msg_to_opp,":");
+                len=strlen(opp_name)+1;
+                strcat(p_msg_to_opp,original_msg+len);
+                
+                strcpy(p_msg_to_slef,"get\n");
+           // }
+        }
         
+    }
+    else
+    {
+        int tlen;
+        tlen=strlen(original_msg);
+        for(i=402;i<tlen;i++)
+            opp_name[i-402]=original_msg[i];
+        opp_name[i-402]='\0';
+        char tmsg[450];
+        for(int tt=0;original_msg[tt]!=';';tt++)
+            tmsg[tt]=original_msg[tt];
         if((opp_userID=if_user_online(opp_name))==-1)         //Friend not online
         {
             strcpy(p_msg_to_slef,"User not online\n");
@@ -438,30 +1257,35 @@ int process_msg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_m
             
             strcpy(temp,"offline_msg/");
             strcat(temp,opp_name);
-            p_offline_msg=fopen(temp,"a");
+      //      p_offline_msg=fopen(temp,"a");
             
-            strcpy(p_msg_to_opp,online_user[current_userID]);
-            strcat(p_msg_to_opp,":");
-            len=strlen(online_user[current_userID])+1;
-            strcat(p_msg_to_opp,original_msg+len);
+           // strcpy(p_msg_to_opp,online_user[current_userID]);
+            //strcat(p_msg_to_opp,":");
+            //len=strlen(online_user[current_userID])+1;
+            strcat(p_msg_to_opp,tmsg);
             printf("%s\n",p_msg_to_opp);
-            fprintf(p_offline_msg,"%s\n",p_msg_to_opp);
-            fclose(p_offline_msg);
+        //    fprintf(p_offline_msg,"%s\n",p_msg_to_opp);
+         //   fclose(p_offline_msg);
         }
         else
         {
             *p_to_sockfd=ary_sockfd[opp_userID];
             
-            strcpy(p_msg_to_opp,online_user[current_userID]);
-            strcat(p_msg_to_opp,":");
-            len=strlen(opp_name)+1;
-            strcat(p_msg_to_opp,original_msg+len);
+            //strcpy(p_msg_to_opp,online_user[current_userID]);
+            //strcat(p_msg_to_opp,":");
+            //len=strlen(opp_name)+1;
+            strcat(p_msg_to_opp,tmsg);
             
             strcpy(p_msg_to_slef,"get\n");
         }
     }
+    
     return 1;
 }
+
+
+
+
 
 
 int process_gmsg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_msg_to_opp,const char*original_msg)
@@ -473,12 +1297,12 @@ int process_gmsg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_
     int opp_userID;
     int len;
     FILE* p_offline_msg=NULL;
-    
+
     for(i=2;i<100&&original_msg[i]!=':';i++)
         group_name[i-2]=original_msg[i];
-    
+
     group_name[i-2]=0;
-    
+
     if(if_group_exist(group_name)==0)
     {
         strcpy(p_msg_to_slef,"User not exist\n");
@@ -493,32 +1317,32 @@ int process_gmsg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_
          group_name[i]=0;
          */
         char opp_names[100][100] = {0};
-        
-        
+
+
         int user_num = 0;
-        
+
         user_num = get_group_users_from_db(group_name, opp_names);
-        
+
         printf("%d", user_num);
-        
+
         for(int i=0;i<user_num;i++)
         {
             printf("%s\n", opp_names[i]);
         }
-        
+
         for(int i=0;i<user_num;i++)
         {
             //if(opp_names[i] == )
             //memset(opp_userID, 0, 100);
-            if((opp_userID=if_user_online(opp_names[i]))==-1)         //Friend not online
+         /*   if((opp_userID=if_user_online(opp_names[i]))==-1)         //Friend not online
             {
                 strcpy(p_msg_to_slef,"User not online\n");
                 *p_msg_to_opp=0;
-                
+
                 strcpy(temp,"offline_msg/");
                 strcat(temp,opp_names[i]);
-                p_offline_msg=fopen(temp,"a");
-                
+       //         p_offline_msg=fopen(temp,"a");
+
                 strcpy(p_msg_to_opp, "$");
                 strcat(p_msg_to_opp, group_name);
                 strcat(p_msg_to_opp,":");
@@ -527,15 +1351,19 @@ int process_gmsg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_
                 len=strlen(online_user[current_userID])+1;
                 strcat(p_msg_to_opp,original_msg+len);
                 //printf("%s\n",p_msg_to_opp);
-                fprintf(p_offline_msg,"%s\n",p_msg_to_opp);//todo:加入标志来让client确定群消息
-                fclose(p_offline_msg);
-            }
-            else
-            {
-                printf("%d\n", opp_userID);
-                printf("%s\n", original_msg);
-                *p_to_sockfd=ary_sockfd[opp_userID];
+        //        fprintf(p_offline_msg,"%s\n",p_msg_to_opp);//todo:加入标志来让client确定群消息
+          //      fclose(p_offline_msg);
+            }*/
+           // else
+           // {
                 
+	for(int i=0;i<=opp_userID;i++)
+	{	 
+		if(i == current_userID)	continue;		
+		printf("%d\n", opp_userID);
+               // printf("%s\n", original_msg);
+                *p_to_sockfd=ary_sockfd[i];
+
                 strcpy(p_msg_to_opp, "$");
                 strcat(p_msg_to_opp, group_name);
                 strcat(p_msg_to_opp,":");
@@ -543,23 +1371,23 @@ int process_gmsg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_
                 strcat(p_msg_to_opp,":");
                 len=strlen(group_name)+3;
                 strcat(p_msg_to_opp,original_msg+len);
-                
+
                 strcpy(p_msg_to_slef,"get\n");
-                
+
                 if(*p_to_sockfd>0)
                 {
-                    printf("%s\n", p_msg_to_opp);
+
+                    printf("@@@@@@@@@@@@@%s\n", p_msg_to_opp);
                     send(*p_to_sockfd, p_msg_to_opp, strlen(p_msg_to_opp)+1, 0);
                 }
-                
-            }
-            
+		}
+           // }
+
             usleep(1000000);
         }
     }
-    
-}
 
+}
 /********************************************************************************
  * Description : 处理文件消息，发布版本已改为 P2P
  * Prameter    : 参考 process_command
@@ -608,9 +1436,9 @@ int process_file(int* p_to_sockfd,int current_userID,char *p_msg_to_opp,const ch
     p_msg_to_opp[0]='#';
     p_msg_to_opp[1]='#';
     strcpy(p_msg_to_opp+2,add);
-    int tmplen;
-    tmplen=strlen(p_msg_to_opp);
-    p_msg_to_opp[tmplen]=len1-'0';
+    //int tmplen;
+    //tmplen=strlen(p_msg_to_opp);
+    //p_msg_to_opp[tmplen]=len1-'0';
     
     /*
      for(i=0;i<len;i++)
@@ -630,6 +1458,7 @@ int process_file(int* p_to_sockfd,int current_userID,char *p_msg_to_opp,const ch
  ********************************************************************************/
 void* _pthread_entrance(void* p)
 {
+	//return NULL;
     char buf[100];
     char temp[100];
     char msg_to_self[100];
@@ -645,7 +1474,7 @@ void* _pthread_entrance(void* p)
         if(current_user_sockfd==ary_sockfd[i])
             break;
     current_user_ID=i;
-    
+
     char* try = (char*)p;
     
     while(1)
@@ -668,10 +1497,15 @@ void* _pthread_entrance(void* p)
             if(buf[0]=='/')
             {
                 process_command(&opposite_user_sockfd,current_user_ID,msg_to_self,msg_to_opp,buf);
+printf("falemei\n");
                 send(current_user_sockfd,msg_to_self,strlen(msg_to_self)+1,0);
+printf("%s\n",msg_to_self);
+printf("falemei\n");
                 if(opposite_user_sockfd>0)
                 {
                     send(opposite_user_sockfd,msg_to_opp,strlen(msg_to_opp)+1,0);
+		printf("%s\n",msg_to_opp);
+		printf("HAHA\n");
                 }
             }
             else if(buf[0]=='#')
@@ -689,7 +1523,7 @@ void* _pthread_entrance(void* p)
             }
             else
             {
-                printf("cccccc\n");
+               printf("cccccccccccc\n");
                 process_msg(&opposite_user_sockfd,current_user_ID,msg_to_self,msg_to_opp,buf);
                 //send(current_user_sockfd,msg_to_self,strlen(msg_to_self)+1,0);
                 if(opposite_user_sockfd>0)
@@ -713,24 +1547,32 @@ void* _pthread_entrance(void* p)
 int main()
 {
     int i;
+    
     char buf[100];
     int listen_sockfd;                           //server's listen socketfd
+    int client_sockfd[10];                          //client's listen socketfd
+int cnt=0;    
+// int _2_server_sockfd;                           //chat socketfd
     socklen_t listen_len;
     socklen_t client_len;
     socklen_t server_len;
     struct sockaddr_in listen_sockaddr;
     struct sockaddr_in client_sockaddr;
-    struct sockaddr_in server_sockaddr;//the number of current online user
+    struct sockaddr_in server_sockaddr;
+    //the number of current online user
     struct in_addr client_ip;                    //the client's address information
     pthread_t ptid[MAX_USER_NUM];
+    
     char try[100];
+    
     printf("\n======================server initialization======================\n");
     listen_sockfd = socket(AF_INET,SOCK_STREAM, 0);                        // 定义套接字类型
     listen_sockaddr.sin_family = AF_INET;
     listen_sockaddr.sin_port = htons(MYPORT);
     listen_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+   
     listen_len = sizeof(listen_sockaddr);
-    int on=1;
+   int on=1;
     setsockopt(listen_sockfd,SOL_SOCKET,SO_REUSEADDR,&on,sizeof(on));
     if(bind(listen_sockfd,(struct sockaddr *)&listen_sockaddr,listen_len)==-1)
     {
@@ -741,41 +1583,95 @@ int main()
     {
         printf("A new socket bind success\n");
     }
+    
     if(listen(listen_sockfd,5) == -1)
     {
         perror("listen");
         exit(1);
     }
+    else printf("listen success!\n");
+    
     while(1)
     {
         struct in_addr sin_addr;
-        client_len = sizeof(client_sockaddr); //listen_len = sizeof(listen_sockaddr);
-        printf("Taht\n");
-        if((client_sockfd=accept(listen_sockfd,(struct sockaddr *)&client_sockaddr,&client_len))==-1)
+        int ne_sockfd;
+	struct sockaddr_in ne_sockaddr;
+        printf("zzxx\n");
+        fflush(stdout);
+   //     int on = 1;                              //允许重复使用本地地址和套接字绑定
+        
+        
+        
+        
+        client_len = sizeof(struct sockaddr);
+        //listen_len = sizeof(listen_sockaddr);
+        printf("shizhende\n");
+        if((client_sockfd[cnt++]=accept(listen_sockfd,(struct sockaddr *)&client_sockaddr,&client_len))==-1)
         {
+		printf("tuichu\n");
             perror("accept error");
             exit(1);
         }
         else                                     //connect success
-        {
-            
+        {  
+		
+            printf("That's it!\n");
             sin_addr=client_sockaddr.sin_addr;
             itoa(PORT+userNum,buf);
-            send(client_sockfd,buf,strlen(buf),0);
+            send(client_sockfd[cnt-1],buf,strlen(buf),0);
+            //userNum++;
         }
-        for(i=0;i<MAX_USER_NUM;i++)
+        /*for(i=0;i<MAX_USER_NUM;i++)
             if(ary_sockfd[i]==0)
-                break;
+                break;*/
+        //ary_sockfd[i]=client_sockfd;
+        //global_current_sockfd=client_sockfd;
+        
+        //pthread_create(&ptid[i],NULL,_pthread_entrance,NULL);
+        
         strcpy(try,inet_ntoa(client_sockaddr.sin_addr));
-        sleep(1);
+        
+        /*_2_server_sockfd = socket(AF_INET,SOCK_STREAM, 0); // 定义套接字类型
+        server_sockaddr.sin_family = AF_INET;
+        server_sockaddr.sin_port = htons(PORT+userNum);
+        server_sockaddr.sin_addr=sin_addr;
+        server_len = sizeof(server_sockaddr);
+        bzero(&(server_sockaddr.sin_zero),sizeof(server_sockaddr.sin_zero));*/
+        sleep(0.1);
         for(i=0;i<MAX_USER_NUM;i++)
             if(ary_sockfd[i]==0)
-                break;
-        ary_sockfd[i]=client_sockfd;
-        global_current_sockfd=client_sockfd;
+        	{
+			ary_sockfd[i]=client_sockfd[cnt-1];
+		printf("%d is sockfd\n %d",client_sockfd[cnt-1]);
+			break;		
+		}
+        global_current_sockfd=client_sockfd[cnt-1];
+        
         printf("Maybe\n");
+        /*if (connect(_2_server_sockfd, (struct sockaddr *)&server_sockaddr,sizeof(struct sockaddr_in)) == -1)
+        {
+            printf("Maybe\n");
+            perror("connect");
+            exit(1);
+        }
+        else
+        {
+            userNum++;
+        }*/
         userNum++;
-        pthread_create(&ptid[userNum],NULL,_pthread_entrance(&try),NULL);
-        close(listen_sockfd);
+		//("ttee\n");
+        //pthread_create(&ptid[userNum],NULL,_pthread_entrance(&try),NULL);
+	switch(fork()){
+		case 0:
+			(*_pthread_entrance)(&try);
+			break;
+		case -1:
+			printf("error");
+			break;
+	}
+printf("ttee\n");
+	fflush(stdout);
+        //close(listen_sockfd);
     }
+	close(listen_sockfd);
 }
