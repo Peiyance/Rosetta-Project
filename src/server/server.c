@@ -20,9 +20,7 @@
 #include<time.h>
 #include"server.h"
 
-#ifndef database_h
-#define database_h
-#endif
+
 //#include<gtk/gtk.h>
 #define MYPORT    10005                          //server's listen port
 #define PORT      8081                          //the begin of srever's chat port
