@@ -17,11 +17,10 @@
 #include<pthread.h>
 #include<sys/shm.h>
 #include<time.h>
-#include"server.h"
-
-#ifndef database_h
-#define database_h
+#ifndef server_h
+#define server_h
 #endif
+#include"database.h"
 //#include<gtk/gtk.h>
 #define MYPORT    10005                          //server's listen port
 #define PORT      8081                          //the begin of srever's chat port
