@@ -1,5 +1,5 @@
 /********************************************************************************
- * Files         : server.h
+ * Files         : serverfunc.c
  * Description   : the API functions of Rosetta server
  * Author        : zpy
  * Last Modified : 2018.9.1
@@ -31,14 +31,6 @@ int userNum;
 char online_user[MAX_USER_NUM][10];
 int  ary_sockfd[MAX_USER_NUM];                         //arrar for clients' sockfd
 int global_current_sockfd;
-
-struct Package
-{
-    int package_sequence;
-    int ver;
-    int len;
-    char payload[0];
-};
 
 /********************************************************************************
  Description : sign up in database
