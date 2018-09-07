@@ -55,7 +55,7 @@ void deal_button(GtkWidget *w, gpointer data)
 void cb_openfile(GtkWidget* trigger, gint response_id, gpointer data)
 {
     if(response_id == -5){
-        printf("Triggered File Sent: [path]=%s\n[username]:%s\n", data);
+        printf("Triggered File Sent: [path]=%s\n[username]:%s\n", gtk_file_selection_get_filename(trigger), data);
         File_private(gtk_file_selection_get_filename(trigger), data);
     }
     gtk_widget_destroy(trigger);    
@@ -148,7 +148,6 @@ void load_chat_personal_window(Entity* who)
 {
     int id = get_friend_local_id(who->nickname);
     chatting_with = who;
-    printf("chat to %s\n, chatting_with->nickname");
     GtkWidget *main_box;
     GtkWidget *friend_information_box;
     GtkWidget *friend_table;
