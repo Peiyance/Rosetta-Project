@@ -26,12 +26,6 @@
 #define MYKEY   12345
 #define SIZE    10240
 #define MAX_USER_NUM 10
-//int client_sockfd;
-int _2_server_sockfd;
-int userNum;
-char online_user[MAX_USER_NUM][10];
-int  ary_sockfd[MAX_USER_NUM];                         //arrar for clients' sockfd
-int global_current_sockfd;
 
 /********************************************************************************
  Description : sign up in database
