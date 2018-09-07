@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 5.7.22, for Linux (x86_64)
 --
--- Host: localhost    Database: utalk
+-- Host: localhost    Database: realRosetta
 -- ------------------------------------------------------
 -- Server version	5.7.22-0ubuntu0.16.04.1
 
