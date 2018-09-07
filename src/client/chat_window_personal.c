@@ -182,7 +182,7 @@ void load_chat_personal_window(Entity* who)
     gtk_window_set_default_size (GTK_WINDOW(main_chat_personal_window),600,500);
     gtk_window_set_title(GTK_WINDOW(main_chat_personal_window), who->nickname);
     g_signal_connect(GTK_OBJECT(main_chat_personal_window), "delete_event", G_CALLBACK(cb_close_window), NULL);
-    change_background(main_chat_personal_window,600,500,"imgs/bg/04.jpg");
+
 
     //上层界面
     main_box = gtk_vbox_new(FALSE, 0);
@@ -389,7 +389,6 @@ void load_chat_group_window(Entity* who)
     //创建界面
     group_main_chat_personal_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_default_size (GTK_WINDOW(group_main_chat_personal_window),600,500);
-    change_background(group_main_chat_personal_window,600,500,"imgs/bg/04.jpg");
 
     //上层界面
     group_main_box = gtk_vbox_new(FALSE, 0);
