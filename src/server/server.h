@@ -607,3 +607,202 @@ int get_group_list_from_db(const char* name,char* list)
     mysql_close(conn);
     return ans;
 }
+/********************************************************************************
+ Description : search user from db
+ Prameter    : Function done
+ Return      : int (number of users)（due to the fuzzy search, there may be more than one  targets)
+ Side effect : none
+ Author      : zpy
+ Date        : 2018.9.3
+ ********************************************************************************/
+int search_user_from_db(const char* name,char* list)
+{
+    //making connection
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+    {
+        // fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    
+    //check if the username exit
+    char comm[1024]="\0",line[2000]="\0";
+    //memset(line,0,sizeof(line));
+    int ans=0;
+    sprintf(comm,"select * from avator where username like '%%%s%%';",name);  //fuzzy search
+    if (mysql_query(conn,comm))
+    {
+        //fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    res = mysql_use_result(conn);
+    while ((row = mysql_fetch_row(res)) != NULL)
+    {
+        //printf("%s %s\n", row[0],row[0]); //remember the output number!!
+        ans++;
+        strcat(line,row[0]);
+        strcat(line,"\n");
+        strcat(line,row[1]);
+        strcat(line,"\n");
+    }
+    //strcat(line,0);
+    strcpy(list,line);
+    mysql_free_result(res);
+    mysql_close(conn);
+    return ans;
+}
+/********************************************************************************
+ * Description : int to string
+ * Prameter    : int n:a in number   const char* str:destination
+ * Return      : void
+ * Side effect : Function is not completed.
+ * Author      : zpy
+ * Date        : 2018.9.1
+ ********************************************************************************/
+void itoa(int n,char*str)
+{
+    str[0]=(n/1000)+'0';
+    n%=1000;
+    str[1]=(n/100)+'0';
+    n%=100;
+    str[2]=(n/10)+'0';
+    str[3]=n%10+'0';
+    str[4]=0;
+}void create_group_into_database(const char* name1,const char* name2)
+{
+    //making connection
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+    {
+        // fprintf(stderr, "%s\n", mysql_error(conn));
+        // exit(1);
+    }
+    
+    //check if the username exit
+    //char comm[1024];
+    int ans=0;
+   // sprintf(comm,"select * from friend_list where p1 = '%s' and p2 = '%s';",name1,name2);
+   // if (mysql_query(conn,comm))
+   // {
+        // fprintf(stderr, "%s\n", mysql_error(conn));
+        // exit(1);
+   // }
+   // res = mysql_use_result(conn);
+   // while ((row = mysql_fetch_row(res)) != NULL)
+   // {
+        //printf("%s %s\n", row[0],row[1]); //remember the output number!!
+    //    ans++;
+   // }
+   // if(ans!=0)                            //if user_name exist!
+    //{
+    //    mysql_free_result(res);
+    //    mysql_close(conn);
+    //    return ;
+   // }
+   // else  //start insertion
+   // {
+        char comm1[1024] ="\0";
+        sprintf(comm1,"insert into group_list values ('%s','%s');",name1,name2);
+        if (mysql_query(conn,comm1))
+        {
+            //fprintf(stderr, "%s\n", mysql_error(conn));
+            //exit(1);
+        }
+        char comm2[1024] ="\0";
+        sprintf(comm2,"insert into allgroup values ('%s');",name2);
+        if (mysql_query(conn,comm2))
+        {
+            // fprintf(stderr, "%s\n", mysql_error(conn));
+            //exit(1);
+        }
+   // }
+   // mysql_free_result(res);
+    mysql_close(conn);
+    return;
+}
+
+void quit_group_into_database(const char* name1,const char* name2)
+{
+    //making connection
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, server,user, password, database, 0, NULL, 0))
+    {
+        // fprintf(stderr, "%s\n", mysql_error(conn));
+        // exit(1);
+    }
+    
+    //check if the username exit
+    //char comm[1024];
+    int ans=0;
+    // sprintf(comm,"select * from friend_list where p1 = '%s' and p2 = '%s';",name1,name2);
+    // if (mysql_query(conn,comm))
+    // {
+    // fprintf(stderr, "%s\n", mysql_error(conn));
+    // exit(1);
+    // }
+    // res = mysql_use_result(conn);
+    // while ((row = mysql_fetch_row(res)) != NULL)
+    // {
+    //printf("%s %s\n", row[0],row[1]); //remember the output number!!
+    //    ans++;
+    // }
+    // if(ans!=0)                            //if user_name exist!
+    //{
+    //    mysql_free_result(res);
+    //    mysql_close(conn);
+    //    return ;
+    // }
+    // else  //start insertion
+    // {
+    char comm1[1024] ="\0";
+    sprintf(comm1,"delete from group_list where p1='%s';",name1);
+    if (mysql_query(conn,comm1))
+    {
+        //fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }
+    /*char comm2[1024] ="\0";
+    sprintf(comm2,"insert into allgroup values ('%s');",name2);
+    if (mysql_query(conn,comm2))
+    {
+        // fprintf(stderr, "%s\n", mysql_error(conn));
+        //exit(1);
+    }*/
+    // }
+    // mysql_free_result(res);
+    mysql_close(conn);
+    return;
+}
+
+
+/********************************************************************************
+ * Description : ；判断用户是否在线
+ * Prameter    : char*,the name which you want to check
+ * Return      : -1               :not online
+ non-negative int  :the position in the array online_user
+ * Side effect : Function is not completed.
+ * Author      : zpy
+ * Date        : 2018.9.1
+ ********************************************************************************/
+int if_user_online(const char *name)
+{
+    int i;
+    for(i=0;i<MAX_USER_NUM;i++)
+        {
+	if(strcmp(online_user[i],name)==0)
+            break;
+printf("___+++++____%s\n",online_user[i]);
+	}	
+    if(i==MAX_USER_NUM)
+        return -1;
+    return i;
+}
