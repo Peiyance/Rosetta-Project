@@ -16,7 +16,7 @@ typedef struct
     Entity content[20]; //联系人信息
 } Contacts;
 
-Entity self; //自己的信息
+Entity self;       //自己的信息
 Contacts contacts; // 好友、群列表
 
 static void *pthread(void *arg);         // socket接收线程 - 常驻
@@ -61,8 +61,6 @@ gboolean (*cb_chat_record_multicast)(gpointer) = NULL;
 
 } // namespace connector
 using namespace connector;
-
-
 
 // Interfaces
 /********************************************************************************
@@ -178,6 +176,8 @@ int post_msg_unicast(char *str_peer, char *msg)
     bzero(payload, sizeof(payload));
 
     strcat(payload, str_peer);
+    strcat(payload, ":");
+    strcat(payload, self.nickname);
     strcat(payload, ":");
     strcat(payload, msg);
 
@@ -303,7 +303,6 @@ int req_delete_contacts(char *username, char *contact_name, gboolean (*callback)
     return 0;
 }
 
-
 /********************************************************************************
 Description : 请求群聊列表
 Parameter   : username, callback
@@ -395,7 +394,6 @@ int req_chat_record_unicast(char *peer, gboolean (*callback)(gpointer))
     return 0;
 }
 
-
 int req_chat_record_multicast(unsigned int groupId, gboolean (*callback)(gpointer))
 {
     cb_chat_record_multicast = callback;
@@ -413,7 +411,6 @@ int req_chat_record_multicast(unsigned int groupId, gboolean (*callback)(gpointe
     write(sockfd, pkg->payload, /*sizeof(Package) +*/ pkg->len);
     return 0;
 }
-
 
 /********************************************************************************
 Description : File_private_for_server
@@ -583,28 +580,25 @@ static void *pthread(void *arg)
         // /0 login
         if (pkg->payload[0] == '/' && pkg->payload[1] == '0')
         {
-
-            if (pkg->len >= 4) //success
-            {
-                sscanf(msg + 2, "%s%d", self.nickname, &self.avatar_id);
-                //strcpy(self.nickname, "myusername!");
-                //self.avatar_id = 3;
-                //事件：登陆结果;
-                g_idle_add(cb_req_authentication, (void *)&self);
-            }
-
-
-            else
-            {
-
-                g_idle_add(cb_req_authentication, (void *)0);
-            }
+            if (pkg->payload[2])
+                if (pkg->len >= 6) //success
+                {
+                    sscanf(msg + 2, "%s%d", self.nickname, &self.avatar_id);
+                    //strcpy(self.nickname, "myusername!");
+                    //self.avatar_id = 3;
+                    //事件：登陆结果;
+                    g_idle_add(cb_req_authentication, (void *)&self);
+                }
+                else
+                {
+                    g_idle_add(cb_req_authentication, (void *)0);
+                }
         }
         // /1 register
         else if (pkg->payload[0] == '/' && pkg->payload[1] == '1')
         {
 
-            if (pkg->payload[2] == '1') //success
+            if (pkg->payload[2] == '0') //success
             //事件：注册结果
             {
                 g_idle_add(cb_req_register, (void *)1);
@@ -632,14 +626,22 @@ static void *pthread(void *arg)
             }
             contacts.count = cnt;
             //事件：好友列表已更新
-            switch(pkg->payload[1])
+            switch (pkg->payload[1])
             {
-                case '2': g_idle_add(cb_req_contacts,&contacts);break;
-                case '3': g_idle_add(cb_req_add_contacts,&contacts);
-                            sleep(0.1); 
-                          g_idle_add(cb_req_contacts,&contacts);break;
-                case '5': g_idle_add(cb_req_search_contacts,&contacts); break;
-                case '6': g_idle_add(cb_req_delete_contacts,&contacts);break;
+            case '2':
+                g_idle_add(cb_req_contacts, &contacts);
+                break;
+            case '3':
+                g_idle_add(cb_req_add_contacts, &contacts);
+                sleep(0.1);
+                g_idle_add(cb_req_contacts, &contacts);
+                break;
+            case '5':
+                g_idle_add(cb_req_search_contacts, &contacts);
+                break;
+            case '6':
+                g_idle_add(cb_req_delete_contacts, &contacts);
+                break;
             }
         }
         // /9 grouplist, /a search, /b create, /q quit
@@ -659,10 +661,14 @@ static void *pthread(void *arg)
             }
             contacts.count = cnt;
             //事件：group列表已更新
-            switch(pkg->payload[1])
+            switch (pkg->payload[1])
             {
-                case '9': g_idle_add(cb_req_groups,&contacts);break;
-                case 'a': g_idle_add(cb_req_search_group,&contacts);break;
+            case '9':
+                g_idle_add(cb_req_groups, &contacts);
+                break;
+            case 'a':
+                g_idle_add(cb_req_search_group, &contacts);
+                break;
                 //case '5': g_idle_add(cb_search_contacts,&contacts);break;
                 //case '6': g_idle_add(cb_req_delete_contacts,&contacts);break;
             }
@@ -781,7 +787,6 @@ int write_socket(char *payload)
     return 0;
 }
 
-
 /********************************************************************************
 Description : reconnect when lost connection with server
 Author      : zyc
@@ -791,9 +796,9 @@ void reconnect()
 {
     for (;;)
     {
-        
+
         printf("[Error] Connection Lost\n");
-            
+
         close(sockfd);
         sockfd = socket(AF_INET, SOCK_STREAM, 0); //tcp
 
