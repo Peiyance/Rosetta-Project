@@ -59,5 +59,7 @@ void load_chat_personal_window(Entity* who);
 void reload_chat_personal_window();
 
 //Five.c
-void load_five_window(); 
+void load_five_window();
+//emotionbutton.c
+void load_emotion_window(GtkWidget *w,gpointer buffer);
 #endif

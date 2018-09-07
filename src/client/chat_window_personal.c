@@ -52,6 +52,7 @@ void deal_button(GtkWidget *w, gpointer data)
     screenshot(GTK_WIDGET(data), 0, 0, 300, 300, "./shoot/save.png");
 }
 
+
 void cb_openfile(GtkWidget* trigger, gint response_id, gpointer data)
 {
     if(response_id == -5){
@@ -181,6 +182,7 @@ void load_chat_personal_window(Entity* who)
     gtk_window_set_default_size (GTK_WINDOW(main_chat_personal_window),600,500);
     gtk_window_set_title(GTK_WINDOW(main_chat_personal_window), who->nickname);
     g_signal_connect(GTK_OBJECT(main_chat_personal_window), "delete_event", G_CALLBACK(cb_close_window), NULL);
+    change_background(main_chat_personal_window,600,500,"imgs/bg/04.jpg");
 
     //上层界面
     main_box = gtk_vbox_new(FALSE, 0);
@@ -224,6 +226,7 @@ void load_chat_personal_window(Entity* who)
 
     smile_button = sungtk_button_new_with_image("./imgs/IMSmallToolbarFace.ico", 0, 0);
     gtk_box_pack_start(GTK_BOX(under_tool_box),smile_button,FALSE,FALSE,5);
+	
 
     file_button = sungtk_button_new_with_image("./imgs/IMBigToolbarSendFile.ico", 0, 0);
     gtk_box_pack_start(GTK_BOX(under_tool_box),file_button,FALSE,FALSE,5);
@@ -258,6 +261,8 @@ void load_chat_personal_window(Entity* who)
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(input_msg_text), GTK_WRAP_WORD);
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(input_msg_scrolled_window), input_msg_text);
 	gtk_widget_set_size_request(input_msg_scrolled_window, 400, 150);
+
+	g_signal_connect (G_OBJECT (smile_button), "clicked", G_CALLBACK (load_emotion_window), input_text_buffer);
 
 	the_last_box = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(send_msg_box),the_last_box,FALSE,FALSE,0);
@@ -384,6 +389,7 @@ void load_chat_group_window(Entity* who)
     //创建界面
     group_main_chat_personal_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_default_size (GTK_WINDOW(group_main_chat_personal_window),600,500);
+    change_background(group_main_chat_personal_window,600,500,"imgs/bg/04.jpg");
 
     //上层界面
     group_main_box = gtk_vbox_new(FALSE, 0);
@@ -471,6 +477,8 @@ void load_chat_group_window(Entity* who)
     group_send_msg_button = gtk_button_new_with_label("  发  送  ");
     gtk_box_pack_end(GTK_BOX(group_the_last_box),group_send_msg_button,FALSE,FALSE,0);
     g_signal_connect(GTK_OBJECT(group_send_msg_button),"clicked",G_CALLBACK(group_send_msg_in), who);
+	g_signal_connect (G_OBJECT (group_smile_button), "clicked", G_CALLBACK (load_emotion_window), group_input_text_buffer);
+
 
 	//设置热键
 	GtkAccelGroup *face = gtk_accel_group_new();
