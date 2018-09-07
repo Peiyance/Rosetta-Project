@@ -1,4 +1,3 @@
-
 /********************************************************************************
  * Files         : chat_window_personal.c
  * Description   : to show the chat window
@@ -91,7 +90,7 @@ char *get_time()
 void update_buffer(GtkTextBuffer *buffer, char *msg, char *username)
 {
     char now_time[50];
-    sprintf(now_time, "%s (%s)\n", "user", get_time());
+    sprintf(now_time, "%s (%s)\n", username, get_time());
     gtk_text_buffer_insert_at_cursor(GTK_TEXT_BUFFER(buffer), now_time, -1);
     gtk_text_buffer_insert_at_cursor(GTK_TEXT_BUFFER(buffer), msg, -1);
 }
@@ -320,9 +319,9 @@ void group_send_msg_in(GtkWidget* trigger, Entity* who)
 {
     int id = get_group_local_id(who->nickname);
     GtkTextIter start,end;
-    gtk_text_buffer_get_bounds(GTK_TEXT_BUFFER(input_text_buffer),&start,&end);
+    gtk_text_buffer_get_bounds(GTK_TEXT_BUFFER(group_input_text_buffer),&start,&end);
     static char input[500];
-    sprintf(input,"%s\n", gtk_text_buffer_get_text(GTK_TEXT_BUFFER(input_text_buffer),&start,&end,FALSE));
+    sprintf(input,"%s\n", gtk_text_buffer_get_text(GTK_TEXT_BUFFER(group_input_text_buffer),&start,&end,FALSE));
     gtk_text_buffer_set_text(input_text_buffer,"",0);
      post_msg_multicast(who->nickname, input);
     update_buffer(g_msgbufs[id], input, myself->nickname);
@@ -372,7 +371,7 @@ void load_chat_group_window(Entity* who)
 
     //创建界面
     group_main_chat_personal_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_default_size (GTK_WINDOW(group_main_chat_personal_window),400,500);
+    gtk_window_set_default_size (GTK_WINDOW(group_main_chat_personal_window),600,500);
 
     //上层界面
     group_main_box = gtk_vbox_new(FALSE, 0);
