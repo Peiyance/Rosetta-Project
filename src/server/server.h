@@ -1,4 +1,9 @@
-
+/********************************************************************************
+ * Files         : server.h
+ * Description   : the API functions of Rosetta server
+ * Author        : zpy
+ * Last Modified : 2018.9.1
+ ********************************************************************************/
 #include <sys/types.h>
 #include <mysql/mysql.h>
 #include <sys/socket.h>
