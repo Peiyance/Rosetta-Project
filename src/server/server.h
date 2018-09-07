@@ -164,9 +164,49 @@ void quit_group_into_database(const char* name1,const char* name2);
  * Prameter    : char*,the name which you want to check
  * Return      : -1               :not online
  non-negative int  :the position in the array online_user
- * Side effect : Function is not completed.
+ * Side effect : Function is completed.
  * Author      : zpy
  * Date        : 2018.9.1
  ********************************************************************************/
 int if_user_online(const char *name);
-
+/********************************************************************************
+ * Description : 用于处理收到的命令，只处理，不发送
+ * Prameter    : (1)指向对面用户 sockfd 的指针，不向对面发送消息的时候赋值为0
+ *             : (2)当前用户在 online_user 数组中的下标，用来知道是谁发的命令
+ *             : (3)指向发给自己的消息的指针
+ *             : (4)指向发给对面用户消息的指针
+ *             : (5)原始消息
+ * Return      :无意义
+ * Side effect : 可能会修改opp_sockfd
+ * Author      : zpy
+ * Date        : 2018.9.2
+ ********************************************************************************/
+int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_msg_to_opp,const char*original_msg);
+/********************************************************************************
+ * Description : 用于处理收到的消息，只处理，不发送
+ * Prameter    : 参考 process_command
+ * Return      : 无意义
+ * Side effect : Function is completed.
+ * Author      : zpy
+ * Date        : 2018.9.2
+ ********************************************************************************/
+int process_msg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_msg_to_opp,const char* original_msg);
+int process_gmsg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_msg_to_opp,const char*original_msg);
+/********************************************************************************
+ * Description : 处理文件消息 P2P
+ * Prameter    : 参考 process_command
+ * Return      : 无意义
+ * Side effect : 参考 process_command
+ * Author      : zpy
+ * Date        : 2018.9.2
+ ********************************************************************************/
+int process_file(int* p_to_sockfd,int current_userID,char *p_msg_to_opp,const char*original_msg,int len,char*add);
+/********************************************************************************
+ * Description : 用于开启子线程 只收发 处理在子函数中进行
+ * Prameter    : void* 赋值 NULL 即可
+ * Return      : void* 当用户登出或掉线时函数返回，结束线程，返还资源
+ * Side effect : 子线程在登出时必须关闭子线程
+ * Author      : zpy
+ * Date        : 2018.9.2
+ ********************************************************************************/
+void* _pthread_entrance(void* p);
