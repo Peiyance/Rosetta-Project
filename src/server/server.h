@@ -21,10 +21,15 @@
 //#include"database.h"
 //#include<gtk/gtk.h>
 #define MYPORT    10005                          //server's listen port
+
 #define PORT      8081                          //the begin of srever's chat port
+
 #define CLPORT    8079                          //client's chat port
+
 #define MYKEY   12345
+
 #define SIZE    10240
+
 #define MAX_USER_NUM 10
 
 /********************************************************************************
@@ -36,6 +41,7 @@
  Date        : 2018.9.2
  ********************************************************************************/
 int check_signup(const char* line);
+
 /********************************************************************************
  Description : login in database
  Parameter    : Function is not completed.
@@ -45,6 +51,7 @@ int check_signup(const char* line);
  Date        : 2018.9.2
  ********************************************************************************/
 int check_login(const char* line);
+
 /********************************************************************************
  Description : check if the user exist
  Prameter    : Function done
@@ -54,6 +61,7 @@ int check_login(const char* line);
  Date        : 2018.9.2
  ********************************************************************************/
 int if_user_exist(const char* line);
+
 /********************************************************************************
  Description : check if the group exist
  Prameter    : Function done
@@ -63,6 +71,7 @@ int if_user_exist(const char* line);
  Date        : 2018.9.3
  ********************************************************************************/
 int if_group_exist(const char* line);
+
 /********************************************************************************
  Description : search avator from db
  Prameter    : Function done
@@ -72,6 +81,7 @@ int if_group_exist(const char* line);
  Date        : 2018.9.3
  ********************************************************************************/
 int search_avator_from_db(const char* username);
+
 /********************************************************************************
  Description : change default avator in db
  Prameter    : Function done           can be expanded
@@ -80,7 +90,9 @@ int search_avator_from_db(const char* username);
  Author      : zpy
  Date        : 2018.9.3
  ********************************************************************************/
-void change_avator_in_db(const char* username,int id);
+void change_avator_in_db(const char* username,
+                         int id);
+
 /********************************************************************************
  Description : add friend in database
  Prameter    : Function done
@@ -89,7 +101,9 @@ void change_avator_in_db(const char* username,int id);
  Author      : zpy
  Date        : 2018.9.2
  ********************************************************************************/
-void insert_friend_into_database(const char* name1,const char* name2);
+void insert_friend_into_database(const char* name1,
+                                 const char* name2);
+
 /********************************************************************************
  Description : get group users from db
  Prameter    : Function done
@@ -98,7 +112,9 @@ void insert_friend_into_database(const char* name1,const char* name2);
  Author      : zpy
  Date        : 2018.9.2
  ********************************************************************************/
-int get_group_users_from_db(const char* groupname, char list[][100]);
+int get_group_users_from_db(const char* groupname, 
+                            char list[][100]);
+
 /********************************************************************************
  Description : get friend list from db
  Prameter    : Function done
@@ -107,7 +123,9 @@ int get_group_users_from_db(const char* groupname, char list[][100]);
  Author      : zpy
  Date        : 2018.9.2
  ********************************************************************************/
-int get_friend_list_from_db(const char* name,char* list);
+int get_friend_list_from_db(const char* name,
+                            char* list);
+
 /********************************************************************************
  Description : get group list from db
  Prameter    : Function done
@@ -116,7 +134,9 @@ int get_friend_list_from_db(const char* name,char* list);
  Author      : zpy
  Date        : 2018.9.3
  ********************************************************************************/
-int get_group_list_from_db(const char* name,char* list);
+int get_group_list_from_db(const char* name,
+                           char* list);
+
 /********************************************************************************
  Description : search user from db
  Prameter    : Function done
@@ -125,7 +145,9 @@ int get_group_list_from_db(const char* name,char* list);
  Author      : zpy
  Date        : 2018.9.3
  ********************************************************************************/
-int search_user_from_db(const char* name,char* list);
+int search_user_from_db(const char* name,
+                        char* list);
+
 /********************************************************************************
  * Description : int to string
  * Prameter    : int n:a in number   const char* str:destination
@@ -135,6 +157,7 @@ int search_user_from_db(const char* name,char* list);
  * Date        : 2018.9.1
  ********************************************************************************/
 void itoa(int n,char*str);
+
 /********************************************************************************
  * Description : create a group
  * Prameter    : user_name   group_name
@@ -143,7 +166,9 @@ void itoa(int n,char*str);
  * Author      : zpy
  * Date        : 2018.9.6
  ********************************************************************************/
-void create_group_into_database(const char* name1,const char* name2);
+void create_group_into_database(const char* name1,
+                                const char* name2);
+
 /********************************************************************************
  * Description : quit a group
  * Prameter    : user_name   group_name
@@ -152,7 +177,9 @@ void create_group_into_database(const char* name1,const char* name2);
  * Author      : zpy
  * Date        : 2018.9.6
  ********************************************************************************/
-void quit_group_into_database(const char* name1,const char* name2);
+void quit_group_into_database(const char* name1,
+                              const char* name2);
+
 /********************************************************************************
  * Description : ；判断用户是否在线
  * Prameter    : char*,the name which you want to check
@@ -163,6 +190,7 @@ void quit_group_into_database(const char* name1,const char* name2);
  * Date        : 2018.9.1
  ********************************************************************************/
 int if_user_online(const char *name);
+
 /********************************************************************************
  * Description : 用于处理收到的命令，只处理，不发送
  * Prameter    : (1)指向对面用户 sockfd 的指针，不向对面发送消息的时候赋值为0
@@ -171,11 +199,15 @@ int if_user_online(const char *name);
  *             : (4)指向发给对面用户消息的指针
  *             : (5)原始消息
  * Return      :无意义
- * Side effect : 可能会修改opp_sockfd
  * Author      : zpy
  * Date        : 2018.9.2
  ********************************************************************************/
-int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_msg_to_opp,const char*original_msg);
+int process_command(int* p_to_sockfd,
+                    int current_userID,
+                    char* p_msg_to_slef,
+                    char*p_msg_to_opp,
+                    const char*original_msg);
+
 /********************************************************************************
  * Description : 用于处理收到的消息，只处理，不发送
  * Prameter    : 参考 process_command
@@ -184,8 +216,18 @@ int process_command(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char
  * Author      : zpy
  * Date        : 2018.9.2
  ********************************************************************************/
-int process_msg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_msg_to_opp,const char* original_msg);
-int process_gmsg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_msg_to_opp,const char*original_msg);
+int process_msg(int* p_to_sockfd,
+                int current_userID,
+                char* p_msg_to_slef,
+                char*p_msg_to_opp,
+                const char* original_msg);
+
+int process_gmsg(int* p_to_sockfd,
+                 int current_userID,
+                 char* p_msg_to_slef,
+                 char*p_msg_to_opp,
+                 const char*original_msg);
+
 /********************************************************************************
  * Description : 处理文件消息 P2P
  * Prameter    : 参考 process_command
@@ -194,7 +236,12 @@ int process_gmsg(int* p_to_sockfd,int current_userID,char* p_msg_to_slef,char*p_
  * Author      : zpy
  * Date        : 2018.9.2
  ********************************************************************************/
-int process_file(int* p_to_sockfd,int current_userID,char *p_msg_to_opp,const char*original_msg,int len,char*add);
+int process_file(int* p_to_sockfd,
+                 int current_userID,
+                 char *p_msg_to_opp,
+                 const char*original_msg,
+                 int len,char*add);
+
 /********************************************************************************
  * Description : 用于开启子线程 只收发 处理在子函数中进行
  * Prameter    : void* 赋值 NULL 即可
